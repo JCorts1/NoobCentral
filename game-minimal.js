@@ -1,4 +1,4 @@
-console.log('Game script loading...');
+console.log('Game script loading... VERSION 2.0 - DEPLOYMENT FIX');
 
 class Game {
     constructor() {
@@ -2240,6 +2240,18 @@ class Game {
     update() {
         console.log('Game updating, distance:', this.distance);
 
+        // Emergency check for deployment issue - check elements exist before using them
+        const scoreCheck = document.getElementById('score');
+        const energyCheck = document.getElementById('energy');
+        console.log('DEPLOYMENT DEBUG - Score element exists:', !!scoreCheck);
+        console.log('DEPLOYMENT DEBUG - Energy element exists:', !!energyCheck);
+        
+        if (!scoreCheck || !energyCheck) {
+            console.error('CRITICAL: UI elements missing during update - stopping game');
+            this.gameRunning = false;
+            return;
+        }
+
         this.distance += this.gameSpeed * 0.1;
 
         // Update visual effects
@@ -2317,7 +2329,11 @@ class Game {
         this.checkCollisions();
         this.checkBulletCollisions();
 
-        // Update UI with detailed error checking
+        // TEMPORARY: Disable UI updates to fix deployment error
+        console.log('DEPLOYMENT FIX: UI updates disabled temporarily');
+        
+        // Update UI with detailed error checking - DISABLED FOR DEBUGGING
+        /*
         try {
             console.log('Trying to update UI...');
             const scoreEl = document.getElementById('score');
@@ -2344,6 +2360,7 @@ class Game {
             console.error('Error updating UI:', error);
             console.error('Stack trace:', error.stack);
         }
+        */
     }
 
     draw() {
