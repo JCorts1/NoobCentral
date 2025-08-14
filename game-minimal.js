@@ -522,267 +522,480 @@ class Game {
             },
             
             draw: function(ctx) {
+                // Enhanced animation calculations
                 const legOffset = Math.floor(this.animFrame / 8) % 2 === 0 ? 3 : -3;
+                const armOffset = Math.floor(this.animFrame / 6) % 2 === 0 ? 2 : -2;
+                const breatheOffset = Math.sin(this.animFrame * 0.1) * 1;
+                const blinkFrame = Math.floor(this.animFrame / 60) % 10 === 0;
+                const hairSway = Math.sin(this.animFrame * 0.08) * 1;
+                const isJumping = !this.onGround;
+                
+                // Draw character shadow first
+                this.drawShadow(ctx);
                 
                 if (this.character === 'juan') {
-                    this.drawJuan(ctx, legOffset);
+                    this.drawJuan(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
                 } else if (this.character === 'kim') {
-                    this.drawKim(ctx, legOffset);
+                    this.drawKim(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
                 } else if (this.character === 'julian') {
-                    this.drawJulian(ctx, legOffset);
+                    this.drawJulian(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
                 } else if (this.character === 'jay') {
-                    this.drawJay(ctx, legOffset);
+                    this.drawJay(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
                 }
             },
             
-            drawJuan: function(ctx, legOffset) {
-                // Long BLACK hair for Juan (draw hair first, behind face)
+            drawShadow: function(ctx) {
+                // Character shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, this.y + this.height + 5, 
+                           this.width * 0.4, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+            },
+            
+            drawJuan: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Long BLACK hair for Juan with sway animation
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 15, this.y + 10, 50, 25); // Top hair
-                ctx.fillRect(this.x + 10, this.y + 20, 60, 20); // Side hair
-                ctx.fillRect(this.x + 5, this.y + 30, 70, 25);  // Long flowing hair
-                ctx.fillRect(this.x + 8, this.y + 50, 64, 15);  // Hair continues down back
+                ctx.fillRect(this.x + 15 + hairSway, this.y + 10, 50, 25); // Top hair
+                ctx.fillRect(this.x + 10 + hairSway, this.y + 20, 60, 20); // Side hair
+                ctx.fillRect(this.x + 5 + hairSway * 1.5, this.y + 30, 70, 25);  // Long flowing hair
+                ctx.fillRect(this.x + 8 + hairSway * 2, this.y + 50, 64, 15);  // Hair continues down back
                 
-                // Head (Latino skin tone) - draw over hair
+                // Head with breathing animation
                 ctx.fillStyle = '#D2B48C';
-                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
+                ctx.fillRect(this.x + 25, this.y + 15 + breatheOffset, 30, 30);
                 
-                // Face details (more visible)
+                // Eyes with blinking animation
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 30, this.y + 23, 5, 5); // Left eye (bigger)
-                ctx.fillRect(this.x + 45, this.y + 23, 5, 5); // Right eye (bigger)
+                if (blinkFrame) {
+                    // Closed eyes (blinking)
+                    ctx.fillRect(this.x + 29, this.y + 25 + breatheOffset, 7, 2);
+                    ctx.fillRect(this.x + 44, this.y + 25 + breatheOffset, 7, 2);
+                } else {
+                    // Open eyes
+                    ctx.fillRect(this.x + 30, this.y + 23 + breatheOffset, 5, 5);
+                    ctx.fillRect(this.x + 45, this.y + 23 + breatheOffset, 5, 5);
+                    
+                    // Eye pupils with slight movement
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 31, this.y + 24 + breatheOffset, 2, 2);
+                    ctx.fillRect(this.x + 46, this.y + 24 + breatheOffset, 2, 2);
+                }
                 
-                // Eyebrows
+                // Eyebrows with expression
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 29, this.y + 21, 7, 2); // Left eyebrow
-                ctx.fillRect(this.x + 44, this.y + 21, 7, 2); // Right eyebrow
+                ctx.fillRect(this.x + 29, this.y + 21 + breatheOffset, 7, 2);
+                ctx.fillRect(this.x + 44, this.y + 21 + breatheOffset, 7, 2);
                 
-                // Nose (more prominent)
+                // Nose
                 ctx.fillStyle = '#C8A882';
-                ctx.fillRect(this.x + 38, this.y + 28, 4, 6);
+                ctx.fillRect(this.x + 38, this.y + 28 + breatheOffset, 4, 6);
                 
-                // Mouth (more visible)
+                // Mouth with expression
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 35, this.y + 36, 10, 3);
+                if (isJumping) {
+                    // Excited expression when jumping
+                    ctx.fillRect(this.x + 35, this.y + 35 + breatheOffset, 10, 4);
+                } else {
+                    // Normal expression
+                    ctx.fillRect(this.x + 35, this.y + 36 + breatheOffset, 10, 3);
+                }
                 
-                // Facial hair (mustache)
+                // Facial hair
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 36, this.y + 34, 8, 2);
+                ctx.fillRect(this.x + 36, this.y + 34 + breatheOffset, 8, 2);
                 
-                // Body (black shirt)
+                // Body with breathing animation
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
+                ctx.fillRect(this.x + 20, this.y + 45 + breatheOffset, 40, 50);
                 
-                // Arms (Latino skin tone)
+                // Arms with swinging animation
                 ctx.fillStyle = '#D2B48C';
-                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
-                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
+                if (isJumping) {
+                    // Arms up when jumping
+                    ctx.fillRect(this.x + 5, this.y + 45 + armOffset, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 45 - armOffset, 18, 30);
+                } else {
+                    // Normal swinging arms
+                    ctx.fillRect(this.x + 5, this.y + 50 + armOffset, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 50 - armOffset, 18, 30);
+                }
                 
                 // Hands
                 ctx.fillStyle = '#D2B48C';
-                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
-                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                ctx.fillRect(this.x + 7, this.y + 78 + armOffset, 14, 12);
+                ctx.fillRect(this.x + 59, this.y + 78 - armOffset, 14, 12);
                 
-                // Jeans (cover the legs properly)
+                // Jeans with proper leg animation
                 ctx.fillStyle = '#0066CC';
                 ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
                 
-                // Legs with running animation (jeans color, not skin)
-                ctx.fillStyle = '#0066CC';
-                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
-                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
+                // Enhanced leg animation
+                if (isJumping) {
+                    // Legs together when jumping
+                    ctx.fillRect(this.x + 25, this.y + 90, 12, 30);
+                    ctx.fillRect(this.x + 43, this.y + 90, 12, 30);
+                } else {
+                    // Running animation
+                    ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);
+                    ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);
+                }
                 
-                // Shoes
+                // Shoes with better positioning
                 ctx.fillStyle = '#654321';
-                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left shoe
-                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right shoe
+                if (isJumping) {
+                    ctx.fillRect(this.x + 23, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41, this.y + 115, 16, 8);
+                } else {
+                    ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);
+                }
                 
-                // Guitar (larger and more detailed)
+                // Guitar with animation
+                const guitarSway = Math.sin(this.animFrame * 0.1) * 2;
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x - 15, this.y + 60, 30, 12);  // Guitar body
-                ctx.fillRect(this.x - 20, this.y + 55, 20, 22);  // Guitar head
+                ctx.fillRect(this.x - 15 + guitarSway, this.y + 60, 30, 12);
+                ctx.fillRect(this.x - 20 + guitarSway, this.y + 55, 20, 22);
                 
                 // Guitar neck
                 ctx.fillStyle = '#CD853F';
-                ctx.fillRect(this.x - 12, this.y + 50, 4, 35);
+                ctx.fillRect(this.x - 12 + guitarSway, this.y + 50, 4, 35);
                 
-                // Guitar strings
+                // Guitar strings with subtle vibration
                 ctx.fillStyle = '#FFD700';
                 for (let i = 0; i < 6; i++) {
-                    ctx.fillRect(this.x - 18 + i * 2, this.y + 57, 1, 18);
+                    const stringVibration = Math.sin(this.animFrame * 0.3 + i) * 0.5;
+                    ctx.fillRect(this.x - 18 + i * 2 + guitarSway + stringVibration, this.y + 57, 1, 18);
                 }
                 
                 // Guitar sound hole
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x - 10, this.y + 63, 8, 8);
+                ctx.fillRect(this.x - 10 + guitarSway, this.y + 63, 8, 8);
+                
+                // Add musical notes effect occasionally
+                if (Math.floor(this.animFrame / 30) % 20 === 0) {
+                    this.drawMusicalNotes(ctx);
+                }
             },
             
-            drawKim: function(ctx, legOffset) {
-                // Long BROWN hair for Kim (draw hair first, behind face)
+            drawMusicalNotes: function(ctx) {
+                // Musical notes floating around Juan
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '16px Arial';
+                ctx.fillText('♪', this.x - 25, this.y + 30);
+                ctx.fillText('♫', this.x + 75, this.y + 40);
+                ctx.fillText('♪', this.x - 30, this.y + 70);
+            },
+            
+            drawKim: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Long BROWN hair with bounce animation
+                const hairBounce = Math.sin(this.animFrame * 0.12) * 1.5;
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 18, this.y + 10, 44, 30); // Top and side hair
-                ctx.fillRect(this.x + 12, this.y + 25, 56, 25); // Long flowing hair
-                ctx.fillRect(this.x + 15, this.y + 45, 50, 20); // Hair continues down
+                ctx.fillRect(this.x + 18 + hairSway, this.y + 10 + hairBounce, 44, 30);
+                ctx.fillRect(this.x + 12 + hairSway * 1.2, this.y + 25 + hairBounce, 56, 25);
+                ctx.fillRect(this.x + 15 + hairSway * 1.5, this.y + 45 + hairBounce, 50, 20);
                 
-                // Head (WHITE skin tone) - draw over hair
+                // Head with breathing animation
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
+                ctx.fillRect(this.x + 25, this.y + 15 + breatheOffset, 30, 30);
                 
-                // Face details (more visible)
+                // Eyes with blinking and makeup
+                if (blinkFrame) {
+                    // Closed eyes with eyelashes
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 28, this.y + 25 + breatheOffset, 8, 2);
+                    ctx.fillRect(this.x + 44, this.y + 25 + breatheOffset, 8, 2);
+                } else {
+                    // Open eyes with makeup
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 30, this.y + 23 + breatheOffset, 5, 5);
+                    ctx.fillRect(this.x + 45, this.y + 23 + breatheOffset, 5, 5);
+                    
+                    // Eye pupils with sparkle
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 31, this.y + 24 + breatheOffset, 2, 2);
+                    ctx.fillRect(this.x + 46, this.y + 24 + breatheOffset, 2, 2);
+                    
+                    // Eye sparkle effect
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x + 32, this.y + 25 + breatheOffset, 1, 1);
+                    ctx.fillRect(this.x + 47, this.y + 25 + breatheOffset, 1, 1);
+                }
+                
+                // Enhanced eyelashes
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 30, this.y + 23, 5, 5); // Left eye (bigger)
-                ctx.fillRect(this.x + 45, this.y + 23, 5, 5); // Right eye (bigger)
+                ctx.fillRect(this.x + 28, this.y + 21 + breatheOffset, 8, 2);
+                ctx.fillRect(this.x + 44, this.y + 21 + breatheOffset, 8, 2);
                 
-                // Eyelashes (more prominent)
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 28, this.y + 21, 8, 2); // Left eyelash
-                ctx.fillRect(this.x + 44, this.y + 21, 8, 2); // Right eyelash
-                
-                // Eyebrows (shaped)
+                // Shaped eyebrows
                 ctx.fillStyle = '#654321';
-                ctx.fillRect(this.x + 29, this.y + 19, 7, 2); // Left eyebrow
-                ctx.fillRect(this.x + 44, this.y + 19, 7, 2); // Right eyebrow
+                ctx.fillRect(this.x + 29, this.y + 19 + breatheOffset, 7, 2);
+                ctx.fillRect(this.x + 44, this.y + 19 + breatheOffset, 7, 2);
                 
-                // Nose (more defined)
+                // Nose with highlighting
                 ctx.fillStyle = '#F5A9A9';
-                ctx.fillRect(this.x + 38, this.y + 28, 4, 6);
+                ctx.fillRect(this.x + 38, this.y + 28 + breatheOffset, 4, 6);
                 
-                // Lipstick (more prominent)
+                // Glossy lipstick with expression
                 ctx.fillStyle = '#FF69B4';
-                ctx.fillRect(this.x + 35, this.y + 35, 10, 4);
+                if (isJumping) {
+                    // Excited smile when jumping
+                    ctx.fillRect(this.x + 34, this.y + 34 + breatheOffset, 12, 5);
+                } else {
+                    ctx.fillRect(this.x + 35, this.y + 35 + breatheOffset, 10, 4);
+                }
                 
-                // Cheek blush
+                // Cheek blush with glow
                 ctx.fillStyle = '#FFB6C1';
-                ctx.fillRect(this.x + 27, this.y + 30, 4, 3); // Left cheek
-                ctx.fillRect(this.x + 49, this.y + 30, 4, 3); // Right cheek
+                ctx.fillRect(this.x + 27, this.y + 30 + breatheOffset, 4, 3);
+                ctx.fillRect(this.x + 49, this.y + 30 + breatheOffset, 4, 3);
                 
-                // Body (pink dress)
+                // Body with breathing animation
                 ctx.fillStyle = '#FF1493';
-                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
+                ctx.fillRect(this.x + 20, this.y + 45 + breatheOffset, 40, 50);
                 
-                // Dress details (ruffles)
+                // Dress details with movement
                 ctx.fillStyle = '#FF69B4';
-                ctx.fillRect(this.x + 22, this.y + 47, 36, 4);
-                ctx.fillRect(this.x + 22, this.y + 70, 36, 4);
+                ctx.fillRect(this.x + 22, this.y + 47 + breatheOffset, 36, 4);
+                ctx.fillRect(this.x + 22, this.y + 70 + breatheOffset, 36, 4);
                 
-                // Arms (white skin tone)
+                // Arms with graceful movement
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
-                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
+                if (isJumping) {
+                    // Graceful arms when jumping
+                    ctx.fillRect(this.x + 5, this.y + 45 + armOffset/2, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 45 - armOffset/2, 18, 30);
+                } else {
+                    // Elegant arm swinging
+                    ctx.fillRect(this.x + 5, this.y + 50 + armOffset/2, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 50 - armOffset/2, 18, 30);
+                }
                 
-                // Hands
+                // Hands with nail polish
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
-                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                ctx.fillRect(this.x + 7, this.y + 78 + armOffset/2, 14, 12);
+                ctx.fillRect(this.x + 59, this.y + 78 - armOffset/2, 14, 12);
                 
-                // Jewelry (larger bracelets and necklace)
+                // Nail polish
+                ctx.fillStyle = '#FF69B4';
+                ctx.fillRect(this.x + 9, this.y + 80 + armOffset/2, 3, 2);
+                ctx.fillRect(this.x + 61, this.y + 80 - armOffset/2, 3, 2);
+                
+                // Animated jewelry with sparkles
                 ctx.fillStyle = '#FFD700';
                 ctx.fillRect(this.x + 8, this.y + 65, 12, 4);  // Left bracelet
                 ctx.fillRect(this.x + 60, this.y + 65, 12, 4); // Right bracelet
                 
+                // Sparkling jewelry effect
+                if (Math.floor(this.animFrame / 20) % 3 === 0) {
+                    this.drawJewelrySparkles(ctx);
+                }
+                
                 // Necklace
-                ctx.fillRect(this.x + 35, this.y + 47, 10, 3);
+                ctx.fillRect(this.x + 35, this.y + 47 + breatheOffset, 10, 3);
                 
-                // Earrings
-                ctx.fillRect(this.x + 22, this.y + 30, 3, 6);  // Left earring
-                ctx.fillRect(this.x + 55, this.y + 30, 3, 6);  // Right earring
+                // Earrings with sway
+                ctx.fillRect(this.x + 22, this.y + 30 + breatheOffset + hairBounce/2, 3, 6);
+                ctx.fillRect(this.x + 55, this.y + 30 + breatheOffset + hairBounce/2, 3, 6);
                 
-                // Legs with running animation (white skin tone)
+                // Enhanced leg animation
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
-                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
+                if (isJumping) {
+                    // Legs together when jumping
+                    ctx.fillRect(this.x + 25, this.y + 90, 12, 30);
+                    ctx.fillRect(this.x + 43, this.y + 90, 12, 30);
+                } else {
+                    // Elegant running
+                    ctx.fillRect(this.x + 25 + legOffset/2, this.y + 95, 12, 25);
+                    ctx.fillRect(this.x + 43 - legOffset/2, this.y + 95, 12, 25);
+                }
                 
-                // High heels
+                // High heels with better animation
                 ctx.fillStyle = '#800080';
-                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left heel
-                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right heel
+                if (isJumping) {
+                    ctx.fillRect(this.x + 23, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41, this.y + 115, 16, 8);
+                } else {
+                    ctx.fillRect(this.x + 23 + legOffset/2, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41 - legOffset/2, this.y + 115, 16, 8);
+                }
                 
                 // Heel details
                 ctx.fillStyle = '#4B0082';
-                ctx.fillRect(this.x + 32 + legOffset, this.y + 118, 3, 5);  // Left heel tip
-                ctx.fillRect(this.x + 50 - legOffset, this.y + 118, 3, 5);  // Right heel tip
+                if (!isJumping) {
+                    ctx.fillRect(this.x + 32 + legOffset/2, this.y + 118, 3, 5);
+                    ctx.fillRect(this.x + 50 - legOffset/2, this.y + 118, 3, 5);
+                }
                 
-                // Handbag accessory
+                // Handbag with sway
+                const bagSway = Math.sin(this.animFrame * 0.15) * 2;
                 ctx.fillStyle = '#FF1493';
-                ctx.fillRect(this.x - 8, this.y + 55, 12, 15);
+                ctx.fillRect(this.x - 8 + bagSway, this.y + 55, 12, 15);
                 ctx.fillStyle = '#FFD700';
-                ctx.fillRect(this.x - 6, this.y + 52, 8, 3); // Bag handle
+                ctx.fillRect(this.x - 6 + bagSway, this.y + 52, 8, 3);
             },
             
-            drawJulian: function(ctx, legOffset) {
-                // Head (WHITE skin tone)
+            drawJewelrySparkles: function(ctx) {
+                // Sparkle effects around jewelry
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '12px Arial';
+                ctx.fillText('✨', this.x + 15, this.y + 60);
+                ctx.fillText('✨', this.x + 65, this.y + 60);
+                ctx.fillText('✨', this.x + 40, this.y + 40);
+                
+                // Diamond sparkles
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText('◊', this.x + 8, this.y + 50);
+                ctx.fillText('◊', this.x + 70, this.y + 55);
+            },
+            
+            drawJulian: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Head with breathing animation
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
+                ctx.fillRect(this.x + 25, this.y + 15 + breatheOffset, 30, 30);
                 
-                // Short BROWN hair for Julian
+                // Short BROWN hair with slight movement
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 22, this.y + 12, 36, 18); // Short, neat hair
-                ctx.fillRect(this.x + 25, this.y + 10, 30, 8);  // Hair top
+                ctx.fillRect(this.x + 22 + hairSway/3, this.y + 12, 36, 18);
+                ctx.fillRect(this.x + 25 + hairSway/3, this.y + 10, 30, 8);
                 
-                // Face details
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
-                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
-                ctx.fillRect(this.x + 35, this.y + 35, 10, 2); // Mouth (friendly smile)
+                // Eyes with blinking and nature-loving expression
+                if (blinkFrame) {
+                    // Closed eyes
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 29, this.y + 27 + breatheOffset, 7, 2);
+                    ctx.fillRect(this.x + 44, this.y + 27 + breatheOffset, 7, 2);
+                } else {
+                    // Open eyes with kind expression
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 30, this.y + 25 + breatheOffset, 4, 4);
+                    ctx.fillRect(this.x + 46, this.y + 25 + breatheOffset, 4, 4);
+                    
+                    // Eye pupils
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 31, this.y + 26 + breatheOffset, 2, 2);
+                    ctx.fillRect(this.x + 47, this.y + 26 + breatheOffset, 2, 2);
+                    
+                    // Green glint in eyes (nature lover)
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(this.x + 32, this.y + 27 + breatheOffset, 1, 1);
+                    ctx.fillRect(this.x + 48, this.y + 27 + breatheOffset, 1, 1);
+                }
+                
+                // Friendly eyebrows
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 29, this.y + 23 + breatheOffset, 6, 2);
+                ctx.fillRect(this.x + 45, this.y + 23 + breatheOffset, 6, 2);
                 
                 // Nose
                 ctx.fillStyle = '#F5A9A9';
-                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                ctx.fillRect(this.x + 38, this.y + 30 + breatheOffset, 4, 4);
                 
-                // Body (green nature-themed shirt)
+                // Mouth with happy expression
+                ctx.fillStyle = '#8B4513';
+                if (isJumping) {
+                    // Big smile when jumping
+                    ctx.fillRect(this.x + 34, this.y + 36 + breatheOffset, 12, 3);
+                } else {
+                    // Content smile
+                    ctx.fillRect(this.x + 35, this.y + 35 + breatheOffset, 10, 2);
+                }
+                
+                // Body with breathing animation
                 ctx.fillStyle = '#228B22';
-                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
+                ctx.fillRect(this.x + 20, this.y + 45 + breatheOffset, 40, 50);
                 
-                // Shirt design (leaf pattern)
+                // Animated leaf pattern on shirt
+                const leafSway = Math.sin(this.animFrame * 0.1);
                 ctx.fillStyle = '#32CD32';
-                ctx.fillRect(this.x + 25, this.y + 55, 6, 8);
-                ctx.fillRect(this.x + 35, this.y + 65, 6, 8);
-                ctx.fillRect(this.x + 45, this.y + 75, 6, 8);
+                ctx.fillRect(this.x + 25 + leafSway, this.y + 55 + breatheOffset, 6, 8);
+                ctx.fillRect(this.x + 35 - leafSway, this.y + 65 + breatheOffset, 6, 8);
+                ctx.fillRect(this.x + 45 + leafSway, this.y + 75 + breatheOffset, 6, 8);
                 
-                // Arms (white skin tone)
+                // Arms with gentle movement
                 ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
-                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
+                if (isJumping) {
+                    // Arms spread like embracing nature
+                    ctx.fillRect(this.x + 5, this.y + 40 + armOffset, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 40 - armOffset, 18, 30);
+                } else {
+                    // Gentle arm swinging
+                    ctx.fillRect(this.x + 5, this.y + 50 + armOffset, 18, 30);
+                    ctx.fillRect(this.x + 57, this.y + 50 - armOffset, 18, 30);
+                }
                 
-                // Hands
-                ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
-                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                // Hands with garden gloves
+                ctx.fillStyle = '#90EE90';
+                ctx.fillRect(this.x + 7, this.y + 78 + armOffset, 14, 12);
+                ctx.fillRect(this.x + 59, this.y + 78 - armOffset, 14, 12);
+                
+                // Dirt stains on gloves
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x + 9, this.y + 80 + armOffset, 3, 2);
+                ctx.fillRect(this.x + 61, this.y + 80 - armOffset, 3, 2);
                 
                 // Khaki pants
                 ctx.fillStyle = '#C3B091';
                 ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
                 
-                // Legs with running animation (white skin tone)
-                ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
-                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
+                // Enhanced leg animation
+                if (isJumping) {
+                    // Legs together when jumping
+                    ctx.fillStyle = '#C3B091';
+                    ctx.fillRect(this.x + 25, this.y + 90, 12, 30);
+                    ctx.fillRect(this.x + 43, this.y + 90, 12, 30);
+                } else {
+                    // Running with pants
+                    ctx.fillStyle = '#C3B091';
+                    ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);
+                    ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);
+                }
                 
                 // Hiking boots
                 ctx.fillStyle = '#654321';
-                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left boot
-                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right boot
+                if (isJumping) {
+                    ctx.fillRect(this.x + 23, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41, this.y + 115, 16, 8);
+                } else {
+                    ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);
+                    ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);
+                }
                 
-                // Plant accessory (larger potted plant)
+                // Animated plant collection
+                const plantGrow = Math.sin(this.animFrame * 0.08) * 2;
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x - 15, this.y + 65, 15, 12); // Larger pot
+                ctx.fillRect(this.x - 15, this.y + 65, 15, 12);
                 
-                // Multiple plants
+                // Growing plants with animation
                 ctx.fillStyle = '#228B22';
-                ctx.fillRect(this.x - 12, this.y + 55, 4, 15); // Plant 1
-                ctx.fillRect(this.x - 8, this.y + 50, 4, 20);  // Plant 2
-                ctx.fillRect(this.x - 4, this.y + 58, 4, 12);  // Plant 3
+                ctx.fillRect(this.x - 12, this.y + 55 - plantGrow, 4, 15 + plantGrow);
+                ctx.fillRect(this.x - 8, this.y + 50 - plantGrow * 1.5, 4, 20 + plantGrow * 1.5);
+                ctx.fillRect(this.x - 4, this.y + 58 - plantGrow * 0.5, 4, 12 + plantGrow * 0.5);
                 
-                // Leaves
+                // Swaying leaves
                 ctx.fillStyle = '#32CD32';
-                ctx.fillRect(this.x - 14, this.y + 52, 8, 6);  // Leaf cluster 1
-                ctx.fillRect(this.x - 10, this.y + 47, 8, 6);  // Leaf cluster 2
-                ctx.fillRect(this.x - 6, this.y + 55, 8, 6);   // Leaf cluster 3
+                ctx.fillRect(this.x - 14 + leafSway, this.y + 52 - plantGrow, 8, 6);
+                ctx.fillRect(this.x - 10 - leafSway, this.y + 47 - plantGrow * 1.5, 8, 6);
+                ctx.fillRect(this.x - 6 + leafSway, this.y + 55 - plantGrow * 0.5, 8, 6);
                 
-                // Garden gloves
-                ctx.fillStyle = '#90EE90';
-                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left glove
-                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right glove
+                // Add nature particles occasionally
+                if (Math.floor(this.animFrame / 40) % 15 === 0) {
+                    this.drawNatureParticles(ctx);
+                }
+            },
+            
+            drawNatureParticles: function(ctx) {
+                // Nature-themed particles around Julian
+                ctx.fillStyle = '#32CD32';
+                ctx.font = '14px Arial';
+                ctx.fillText('🌱', this.x - 25, this.y + 35);
+                ctx.fillText('🍃', this.x + 75, this.y + 45);
+                
+                // Dirt particles
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x - 20, this.y + 80, 2, 2);
+                ctx.fillRect(this.x + 70, this.y + 85, 2, 2);
+                ctx.fillRect(this.x - 15, this.y + 90, 1, 1);
             },
             
             drawJay: function(ctx, legOffset) {
