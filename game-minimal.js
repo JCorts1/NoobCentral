@@ -1022,8 +1022,9 @@ class Game {
         video.src = videoPath;
         video.autoplay = true;
         video.loop = true;
-        video.muted = true;
-        video.controls = true; // Add controls for debugging
+        video.muted = false; // Enable sound
+        video.controls = false; // Remove video controls
+        video.volume = 0.7; // Set volume to 70%
         video.style.cssText = `
             position: fixed;
             top: 50%;
