@@ -11,7 +11,7 @@ class Game {
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = this.isMobile ? 6 : 2; // 1.5x faster mobile speed (4 * 1.5 = 6)
+        this.gameSpeed = this.isMobile ? 12 : 2; // 2x faster mobile speed (6 * 2 = 12)
         this.gameRunning = true;
         this.lives = 5;
         this.maxLives = 5;
