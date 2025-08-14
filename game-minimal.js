@@ -910,12 +910,12 @@ class Game {
         });
         document.querySelector(`[data-character="${character}"]`).classList.add('active');
         
-        // Video functionality disabled for now
-        // if (character === 'juan') {
-        //     this.showJuanVideo();
-        // } else {
-        //     this.hideVideo();
-        // }
+        // Show character video if available
+        if (character === 'juan' || character === 'kim' || character === 'julian') {
+            this.showCharacterVideo(character);
+        } else {
+            this.hideVideo();
+        }
     }
     
     getCharacterDisplayName(character) {
@@ -928,42 +928,230 @@ class Game {
         return names[character] || character;
     }
     
-    showJuanVideo() {
+    showCharacterVideo(character) {
         // Remove existing video if any
         this.hideVideo();
         
+        // First, let's test if we can access files at all
+        console.log(`=== CHARACTER VIDEO DEBUG ===`);
+        console.log(`Selected character: ${character}`);
+        console.log(`Current URL: ${window.location.href}`);
+        console.log(`Base URL: ${window.location.origin}`);
+        
+        // Video file mapping (updated with correct filenames)
+        const videoFiles = {
+            'juan': 'JuanIntro.mp4',
+            'kim': 'KimIntro.mp4', 
+            'julian': 'JulianIntro.mp4'
+        };
+        
+        // Check if video file exists for this character
+        if (!videoFiles[character]) {
+            console.log(`No video available for ${character}`);
+            return;
+        }
+        
+        // Simple test - try to fetch the file first
+        const testPath = `public/${videoFiles[character]}`;
+        console.log(`Testing file access: ${testPath}`);
+        
+        fetch(testPath)
+            .then(response => {
+                console.log(`Fetch response for ${testPath}:`, response.status, response.statusText);
+                if (response.ok) {
+                    console.log(`✅ File exists! Loading video...`);
+                    this.loadVideo(character, testPath);
+                } else {
+                    console.log(`❌ File not found at ${testPath}, trying alternatives...`);
+                    this.tryAlternativePaths(character, videoFiles[character]);
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Fetch failed for ${testPath}:`, error);
+                this.tryAlternativePaths(character, videoFiles[character]);
+            });
+    }
+    
+    tryAlternativePaths(character, filename) {
+        const possiblePaths = [
+            `./${filename}`,
+            `../${filename}`,
+            `./public/${filename}`,
+            `../public/${filename}`,
+            filename
+        ];
+        
+        console.log(`Trying alternative paths for ${character}:`, possiblePaths);
+        
+        let pathIndex = 0;
+        const testNextPath = () => {
+            if (pathIndex >= possiblePaths.length) {
+                console.error(`❌ All paths failed for ${character}`);
+                this.showCharacterMessage(character);
+                return;
+            }
+            
+            const path = possiblePaths[pathIndex];
+            console.log(`Testing path ${pathIndex + 1}/${possiblePaths.length}: ${path}`);
+            
+            fetch(path)
+                .then(response => {
+                    if (response.ok) {
+                        console.log(`✅ Found video at: ${path}`);
+                        this.loadVideo(character, path);
+                    } else {
+                        pathIndex++;
+                        testNextPath();
+                    }
+                })
+                .catch(error => {
+                    pathIndex++;
+                    testNextPath();
+                });
+        };
+        
+        testNextPath();
+    }
+    
+    loadVideo(character, videoPath) {
+        console.log(`Loading video for ${character} from: ${videoPath}`);
+        
         // Create video element
         const video = document.createElement('video');
-        video.id = 'juanVideo';
-        video.src = '/Users/jaycortes/Downloads/Pixelated_Rocker_Juan_With_Guitar.mp4';
+        video.id = 'characterVideo';
+        video.src = videoPath;
         video.autoplay = true;
         video.loop = true;
         video.muted = true;
+        video.controls = true; // Add controls for debugging
         video.style.cssText = `
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
+            width: 350px;
+            height: 350px;
             z-index: 100;
-            border: 3px solid #00ff00;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.8);
+            border: 4px solid #00ff00;
+            border-radius: 15px;
+            background: rgba(0,0,0,0.9);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
         `;
         
-        document.body.appendChild(video);
+        // Add character name overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'videoOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: calc(50% - 200px);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 101;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #00ff00;
+        `;
+        overlay.textContent = `${this.getCharacterDisplayName(character)} Selected!`;
         
-        // Auto-hide after 3 seconds
+        // Add video event listeners
+        video.addEventListener('loadstart', () => {
+            console.log(`✅ Video started loading: ${video.src}`);
+        });
+        
+        video.addEventListener('canplay', () => {
+            console.log(`✅ Video can start playing`);
+        });
+        
+        video.addEventListener('playing', () => {
+            console.log(`✅ Video is now playing!`);
+        });
+        
+        video.addEventListener('error', () => {
+            console.error(`❌ Video error occurred:`, video.error);
+            this.hideVideo();
+            this.showCharacterMessage(character);
+        });
+        
+        video.addEventListener('loadeddata', () => {
+            console.log(`✅ Video data loaded successfully`);
+        });
+        
+        console.log(`📹 Appending video element to page...`);
+        document.body.appendChild(video);
+        document.body.appendChild(overlay);
+        
+        // Auto-hide after 5 seconds (increased for testing)
         setTimeout(() => {
             this.hideVideo();
-        }, 3000);
+        }, 5000);
+    }
+    
+    showCharacterMessage(character) {
+        // Fallback message if video fails to load
+        const message = document.createElement('div');
+        message.id = 'characterMessage';
+        message.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 100;
+            background: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 15px;
+            border: 4px solid #00ff00;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        `;
+        message.innerHTML = `
+            <div>${this.getCharacterDisplayName(character)} Selected!</div>
+            <div style="font-size: 14px; margin-top: 10px; color: #CCCCCC;">
+                Video loading...
+            </div>
+        `;
+        
+        document.body.appendChild(message);
+        
+        // Auto-hide after 2 seconds
+        setTimeout(() => {
+            if (document.getElementById('characterMessage')) {
+                document.getElementById('characterMessage').remove();
+            }
+        }, 2000);
     }
     
     hideVideo() {
-        const existingVideo = document.getElementById('juanVideo');
+        // Remove character video
+        const existingVideo = document.getElementById('characterVideo');
         if (existingVideo) {
             existingVideo.remove();
+        }
+        
+        // Remove old Juan video (legacy)
+        const oldVideo = document.getElementById('juanVideo');
+        if (oldVideo) {
+            oldVideo.remove();
+        }
+        
+        // Remove video overlay
+        const overlay = document.getElementById('videoOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Remove character message
+        const message = document.getElementById('characterMessage');
+        if (message) {
+            message.remove();
         }
     }
     
