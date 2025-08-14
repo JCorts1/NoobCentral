@@ -432,14 +432,14 @@ class Game {
     createPlayer() {
         return {
             x: 100,
-            y: this.canvas.height - 150,
-            width: 60,
-            height: 80,
+            y: this.canvas.height - 200,
+            width: 80,
+            height: 120,
             jumpVelocity: 0,
             onGround: true,
             gravity: 0.8,
-            jumpPower: -15,
-            groundY: this.canvas.height - 150,
+            jumpPower: -18,
+            groundY: this.canvas.height - 200,
             animFrame: 0,
             character: this.selectedCharacter,
             
@@ -481,170 +481,340 @@ class Game {
             },
             
             drawJuan: function(ctx, legOffset) {
-                // Head
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 20, this.y + 10, 20, 20);
+                // Head (Latino skin tone)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
                 
-                // Long hair for Juan
-                ctx.fillStyle = '#654321';
-                ctx.fillRect(this.x + 10, this.y + 5, 40, 20);
-                ctx.fillRect(this.x + 5, this.y + 15, 50, 15);
+                // Long BLACK hair for Juan (flows down back and sides)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 15, this.y + 10, 50, 25); // Top hair
+                ctx.fillRect(this.x + 10, this.y + 20, 60, 20); // Side hair
+                ctx.fillRect(this.x + 5, this.y + 30, 70, 25);  // Long flowing hair
+                ctx.fillRect(this.x + 8, this.y + 50, 64, 15);  // Hair continues down back
                 
-                // Eyes
-                ctx.fillStyle = '#000';
-                ctx.fillRect(this.x + 23, this.y + 17, 3, 3);
-                ctx.fillRect(this.x + 34, this.y + 17, 3, 3);
+                // Face details
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
+                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
+                ctx.fillRect(this.x + 35, this.y + 35, 10, 2); // Mouth
                 
-                // Body
+                // Nose
+                ctx.fillStyle = '#C8A882';
+                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                
+                // Body (orange shirt)
                 ctx.fillStyle = '#FF6B35';
-                ctx.fillRect(this.x + 15, this.y + 30, 30, 35);
+                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
                 
-                // Arms
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 5, this.y + 35, 12, 20);
-                ctx.fillRect(this.x + 43, this.y + 35, 12, 20);
+                // Arms (Latino skin tone)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
+                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
                 
-                // Pants
+                // Hands
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
+                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                
+                // Jeans
                 ctx.fillStyle = '#0066CC';
-                ctx.fillRect(this.x + 15, this.y + 65, 30, 20);
+                ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
                 
-                // Legs (with running animation)
-                ctx.fillRect(this.x + 18 + legOffset, this.y + 65, 8, 20);
-                ctx.fillRect(this.x + 34 - legOffset, this.y + 65, 8, 20);
+                // Legs with running animation (Latino skin tone)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
+                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
                 
-                // Guitar (Juan's accessory)
+                // Shoes
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left shoe
+                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right shoe
+                
+                // Guitar (larger and more detailed)
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x - 8, this.y + 45, 20, 8);
-                ctx.fillRect(this.x - 12, this.y + 40, 12, 18);
+                ctx.fillRect(this.x - 15, this.y + 60, 30, 12);  // Guitar body
+                ctx.fillRect(this.x - 20, this.y + 55, 20, 22);  // Guitar head
+                
+                // Guitar neck
+                ctx.fillStyle = '#CD853F';
+                ctx.fillRect(this.x - 12, this.y + 50, 4, 35);
                 
                 // Guitar strings
                 ctx.fillStyle = '#FFD700';
-                ctx.fillRect(this.x - 10, this.y + 42, 1, 14);
-                ctx.fillRect(this.x - 7, this.y + 42, 1, 14);
-                ctx.fillRect(this.x - 4, this.y + 42, 1, 14);
+                for (let i = 0; i < 6; i++) {
+                    ctx.fillRect(this.x - 18 + i * 2, this.y + 57, 1, 18);
+                }
+                
+                // Guitar sound hole
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x - 10, this.y + 63, 8, 8);
             },
             
             drawKim: function(ctx, legOffset) {
-                // Head
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 20, this.y + 10, 20, 20);
+                // Head (WHITE skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
                 
-                // Long hair for Kim
+                // Long BROWN hair for Kim
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x + 18, this.y + 10, 44, 30); // Top and side hair
+                ctx.fillRect(this.x + 12, this.y + 25, 56, 25); // Long flowing hair
+                ctx.fillRect(this.x + 15, this.y + 45, 50, 20); // Hair continues down
+                
+                // Face details
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 12, this.y + 5, 36, 25);
-                ctx.fillRect(this.x + 8, this.y + 20, 44, 15);
+                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
+                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
                 
-                // Eyes
-                ctx.fillStyle = '#000';
-                ctx.fillRect(this.x + 23, this.y + 17, 3, 3);
-                ctx.fillRect(this.x + 34, this.y + 17, 3, 3);
+                // Eyelashes (feminine touch)
+                ctx.fillRect(this.x + 29, this.y + 23, 6, 1);
+                ctx.fillRect(this.x + 45, this.y + 23, 6, 1);
                 
-                // Body (dress)
+                // Lipstick
+                ctx.fillStyle = '#FF69B4';
+                ctx.fillRect(this.x + 35, this.y + 35, 10, 3);
+                
+                // Nose
+                ctx.fillStyle = '#F5A9A9';
+                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                
+                // Body (pink dress)
                 ctx.fillStyle = '#FF1493';
-                ctx.fillRect(this.x + 15, this.y + 30, 30, 35);
+                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
                 
-                // Arms
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 5, this.y + 35, 12, 20);
-                ctx.fillRect(this.x + 43, this.y + 35, 12, 20);
+                // Dress details (ruffles)
+                ctx.fillStyle = '#FF69B4';
+                ctx.fillRect(this.x + 22, this.y + 47, 36, 4);
+                ctx.fillRect(this.x + 22, this.y + 70, 36, 4);
                 
-                // Jewelry (bracelets)
+                // Arms (white skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
+                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
+                
+                // Hands
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
+                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                
+                // Jewelry (larger bracelets and necklace)
                 ctx.fillStyle = '#FFD700';
-                ctx.fillRect(this.x + 6, this.y + 48, 10, 3);
-                ctx.fillRect(this.x + 44, this.y + 48, 10, 3);
+                ctx.fillRect(this.x + 8, this.y + 65, 12, 4);  // Left bracelet
+                ctx.fillRect(this.x + 60, this.y + 65, 12, 4); // Right bracelet
                 
-                // Legs (with running animation)
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 18 + legOffset, this.y + 65, 8, 20);
-                ctx.fillRect(this.x + 34 - legOffset, this.y + 65, 8, 20);
+                // Necklace
+                ctx.fillRect(this.x + 35, this.y + 47, 10, 3);
                 
-                // Shoes
+                // Earrings
+                ctx.fillRect(this.x + 22, this.y + 30, 3, 6);  // Left earring
+                ctx.fillRect(this.x + 55, this.y + 30, 3, 6);  // Right earring
+                
+                // Legs with running animation (white skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
+                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
+                
+                // High heels
                 ctx.fillStyle = '#800080';
-                ctx.fillRect(this.x + 16 + legOffset, this.y + 80, 12, 5);
-                ctx.fillRect(this.x + 32 - legOffset, this.y + 80, 12, 5);
+                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left heel
+                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right heel
+                
+                // Heel details
+                ctx.fillStyle = '#4B0082';
+                ctx.fillRect(this.x + 32 + legOffset, this.y + 118, 3, 5);  // Left heel tip
+                ctx.fillRect(this.x + 50 - legOffset, this.y + 118, 3, 5);  // Right heel tip
+                
+                // Handbag accessory
+                ctx.fillStyle = '#FF1493';
+                ctx.fillRect(this.x - 8, this.y + 55, 12, 15);
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(this.x - 6, this.y + 52, 8, 3); // Bag handle
             },
             
             drawJulian: function(ctx, legOffset) {
-                // Head
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 20, this.y + 10, 20, 20);
+                // Head (WHITE skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
                 
-                // Short hair for Julian
+                // Short BROWN hair for Julian
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 18, this.y + 8, 24, 15);
+                ctx.fillRect(this.x + 22, this.y + 12, 36, 18); // Short, neat hair
+                ctx.fillRect(this.x + 25, this.y + 10, 30, 8);  // Hair top
                 
-                // Eyes
-                ctx.fillStyle = '#000';
-                ctx.fillRect(this.x + 23, this.y + 17, 3, 3);
-                ctx.fillRect(this.x + 34, this.y + 17, 3, 3);
+                // Face details
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
+                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
+                ctx.fillRect(this.x + 35, this.y + 35, 10, 2); // Mouth (friendly smile)
                 
-                // Body (green shirt)
+                // Nose
+                ctx.fillStyle = '#F5A9A9';
+                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                
+                // Body (green nature-themed shirt)
                 ctx.fillStyle = '#228B22';
-                ctx.fillRect(this.x + 15, this.y + 30, 30, 35);
+                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
                 
-                // Arms
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 5, this.y + 35, 12, 20);
-                ctx.fillRect(this.x + 43, this.y + 35, 12, 20);
+                // Shirt design (leaf pattern)
+                ctx.fillStyle = '#32CD32';
+                ctx.fillRect(this.x + 25, this.y + 55, 6, 8);
+                ctx.fillRect(this.x + 35, this.y + 65, 6, 8);
+                ctx.fillRect(this.x + 45, this.y + 75, 6, 8);
                 
-                // Pants
+                // Arms (white skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);  // Left arm
+                ctx.fillRect(this.x + 57, this.y + 50, 18, 30); // Right arm
+                
+                // Hands
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
+                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
+                
+                // Khaki pants
+                ctx.fillStyle = '#C3B091';
+                ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
+                
+                // Legs with running animation (white skin tone)
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
+                ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
+                
+                // Hiking boots
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 23 + legOffset, this.y + 115, 16, 8);  // Left boot
+                ctx.fillRect(this.x + 41 - legOffset, this.y + 115, 16, 8);  // Right boot
+                
+                // Plant accessory (larger potted plant)
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 15, this.y + 65, 30, 20);
+                ctx.fillRect(this.x - 15, this.y + 65, 15, 12); // Larger pot
                 
-                // Legs (with running animation)
-                ctx.fillRect(this.x + 18 + legOffset, this.y + 65, 8, 20);
-                ctx.fillRect(this.x + 34 - legOffset, this.y + 65, 8, 20);
-                
-                // Plant accessory (small potted plant)
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x - 10, this.y + 50, 8, 6);
+                // Multiple plants
                 ctx.fillStyle = '#228B22';
-                ctx.fillRect(this.x - 8, this.y + 45, 4, 8);
-                ctx.fillRect(this.x - 6, this.y + 47, 4, 6);
+                ctx.fillRect(this.x - 12, this.y + 55, 4, 15); // Plant 1
+                ctx.fillRect(this.x - 8, this.y + 50, 4, 20);  // Plant 2
+                ctx.fillRect(this.x - 4, this.y + 58, 4, 12);  // Plant 3
+                
+                // Leaves
+                ctx.fillStyle = '#32CD32';
+                ctx.fillRect(this.x - 14, this.y + 52, 8, 6);  // Leaf cluster 1
+                ctx.fillRect(this.x - 10, this.y + 47, 8, 6);  // Leaf cluster 2
+                ctx.fillRect(this.x - 6, this.y + 55, 8, 6);   // Leaf cluster 3
+                
+                // Garden gloves
+                ctx.fillStyle = '#90EE90';
+                ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left glove
+                ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right glove
             },
             
             drawJay: function(ctx, legOffset) {
-                // Head
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 20, this.y + 10, 20, 20);
+                // Head (LATINO skin tone)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
                 
-                // Short hair for Jay
-                ctx.fillStyle = '#654321';
-                ctx.fillRect(this.x + 18, this.y + 8, 24, 12);
+                // BLACK hair for Jay (short and neat)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 22, this.y + 12, 36, 18); // Short hair
+                ctx.fillRect(this.x + 25, this.y + 10, 30, 8);  // Hair top
                 
-                // Glasses
-                ctx.fillStyle = '#000';
-                ctx.fillRect(this.x + 21, this.y + 15, 8, 6);
-                ctx.fillRect(this.x + 31, this.y + 15, 8, 6);
-                ctx.fillRect(this.x + 29, this.y + 17, 2, 2);
+                // ROUNDED glasses (bigger and more detailed)
+                ctx.fillStyle = '#000000';
+                // Left lens frame
+                ctx.fillRect(this.x + 28, this.y + 22, 12, 10);
+                ctx.fillRect(this.x + 27, this.y + 23, 14, 8);
+                // Right lens frame  
+                ctx.fillRect(this.x + 44, this.y + 22, 12, 10);
+                ctx.fillRect(this.x + 43, this.y + 23, 14, 8);
+                // Bridge
+                ctx.fillRect(this.x + 40, this.y + 25, 4, 3);
+                // Arms
+                ctx.fillRect(this.x + 20, this.y + 26, 8, 2);
+                ctx.fillRect(this.x + 56, this.y + 26, 8, 2);
+                
+                // Lens glass (white with reflection)
+                ctx.fillStyle = '#F0F0F0';
+                ctx.fillRect(this.x + 29, this.y + 24, 10, 6);
+                ctx.fillRect(this.x + 45, this.y + 24, 10, 6);
                 
                 // Eyes behind glasses
-                ctx.fillStyle = '#FFF';
-                ctx.fillRect(this.x + 23, this.y + 17, 4, 3);
-                ctx.fillRect(this.x + 33, this.y + 17, 4, 3);
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 31, this.y + 26, 3, 3);
+                ctx.fillRect(this.x + 47, this.y + 26, 3, 3);
                 
-                // Body (muscular - wider)
+                // Nose
+                ctx.fillStyle = '#C8A882';
+                ctx.fillRect(this.x + 38, this.y + 32, 4, 4);
+                
+                // Mouth
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 35, this.y + 38, 10, 2);
+                
+                // MUSCULAR body (much wider and more defined)
                 ctx.fillStyle = '#4169E1';
-                ctx.fillRect(this.x + 12, this.y + 30, 36, 35);
+                ctx.fillRect(this.x + 15, this.y + 45, 50, 50); // Wider torso
                 
-                // Muscular arms
-                ctx.fillStyle = '#FFDBAC';
-                ctx.fillRect(this.x + 2, this.y + 35, 15, 20);
-                ctx.fillRect(this.x + 43, this.y + 35, 15, 20);
+                // Chest muscles definition
+                ctx.fillStyle = '#1E90FF';
+                ctx.fillRect(this.x + 20, this.y + 50, 18, 20); // Left pec
+                ctx.fillRect(this.x + 42, this.y + 50, 18, 20); // Right pec
                 
-                // Pants
+                // Abs
+                ctx.fillStyle = '#0073E6';
+                ctx.fillRect(this.x + 35, this.y + 72, 10, 8);  // Upper abs
+                ctx.fillRect(this.x + 35, this.y + 82, 10, 8);  // Lower abs
+                
+                // MUSCULAR arms (much bigger)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x - 2, this.y + 50, 20, 35);  // Left arm (bigger)
+                ctx.fillRect(this.x + 62, this.y + 50, 20, 35); // Right arm (bigger)
+                
+                // Bicep definition
+                ctx.fillStyle = '#C8A882';
+                ctx.fillRect(this.x + 2, this.y + 55, 12, 15);  // Left bicep
+                ctx.fillRect(this.x + 66, this.y + 55, 12, 15); // Right bicep
+                
+                // Hands
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 5, this.y + 83, 14, 12);  // Left hand
+                ctx.fillRect(this.x + 61, this.y + 83, 14, 12); // Right hand
+                
+                // Jeans
                 ctx.fillStyle = '#000080';
-                ctx.fillRect(this.x + 15, this.y + 65, 30, 20);
+                ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
                 
-                // Legs (with running animation)
-                ctx.fillRect(this.x + 18 + legOffset, this.y + 65, 8, 20);
-                ctx.fillRect(this.x + 34 - legOffset, this.y + 65, 8, 20);
+                // MUSCULAR legs (bigger)
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 23 + legOffset, this.y + 95, 15, 25);  // Left leg (bigger)
+                ctx.fillRect(this.x + 42 - legOffset, this.y + 95, 15, 25);  // Right leg (bigger)
                 
-                // Laptop accessory
+                // Sneakers
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(this.x + 21 + legOffset, this.y + 115, 19, 8);  // Left sneaker
+                ctx.fillRect(this.x + 40 - legOffset, this.y + 115, 19, 8);  // Right sneaker
+                
+                // Sneaker details
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 23 + legOffset, this.y + 117, 15, 2);  // Left stripe
+                ctx.fillRect(this.x + 42 - legOffset, this.y + 117, 15, 2);  // Right stripe
+                
+                // Laptop accessory (larger and more detailed)
                 ctx.fillStyle = '#C0C0C0';
-                ctx.fillRect(this.x - 12, this.y + 45, 15, 10);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(this.x - 10, this.y + 47, 11, 6);
+                ctx.fillRect(this.x - 18, this.y + 60, 20, 15); // Laptop base
+                ctx.fillRect(this.x - 16, this.y + 50, 16, 12); // Laptop screen
+                
+                // Screen content
+                ctx.fillStyle = '#000080';
+                ctx.fillRect(this.x - 15, this.y + 52, 14, 8);
+                
+                // Code lines on screen
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(this.x - 14, this.y + 53, 8, 1);
+                ctx.fillRect(this.x - 14, this.y + 55, 6, 1);
+                ctx.fillRect(this.x - 14, this.y + 57, 10, 1);
+                
+                // Keyboard
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(this.x - 16, this.y + 72, 16, 3);
             }
         };
     }
@@ -807,49 +977,160 @@ class Game {
     }
     
     spawnEnemy() {
-        const enemy = {
-            x: this.canvas.width + 50,
-            y: this.canvas.height - 120,
-            width: 60,
-            height: 60,
-            
-            update: function(speed) {
-                this.x -= speed * 1.5; // Enemies move faster than buildings
-            },
-            
-            draw: function(ctx) {
-                // Draw pixelated monster (larger)
-                ctx.fillStyle = '#8B0000'; // Dark red
-                ctx.fillRect(this.x, this.y, this.width, this.height);
+        const enemyType = Math.random();
+        let enemy;
+        
+        if (enemyType < 0.4) {
+            // Regular monster (bigger)
+            enemy = {
+                x: this.canvas.width + 50,
+                y: this.canvas.height - 140,
+                width: 80,
+                height: 80,
+                type: 'monster',
                 
-                // Monster eyes (larger)
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(this.x + 12, this.y + 12, 8, 8);
-                ctx.fillRect(this.x + 35, this.y + 12, 8, 8);
+                update: function(speed) {
+                    this.x -= speed * 1.5;
+                },
                 
-                // Monster pupils
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 14, this.y + 14, 4, 4);
-                ctx.fillRect(this.x + 37, this.y + 14, 4, 4);
+                draw: function(ctx) {
+                    // Draw larger monster
+                    ctx.fillStyle = '#8B0000';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Monster eyes (much larger)
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(this.x + 15, this.y + 15, 12, 12);
+                    ctx.fillRect(this.x + 45, this.y + 15, 12, 12);
+                    
+                    // Monster pupils
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 18, this.y + 18, 6, 6);
+                    ctx.fillRect(this.x + 48, this.y + 18, 6, 6);
+                    
+                    // Monster mouth
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 20, this.y + 45, 40, 12);
+                    
+                    // Monster teeth (much larger)
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 10, this.y + 52, 8, 16);
+                    ctx.fillRect(this.x + 22, this.y + 52, 8, 16);
+                    ctx.fillRect(this.x + 34, this.y + 52, 8, 16);
+                    ctx.fillRect(this.x + 46, this.y + 52, 8, 16);
+                    ctx.fillRect(this.x + 58, this.y + 52, 8, 16);
+                    
+                    // Monster claws
+                    ctx.fillStyle = '#FFFF00';
+                    ctx.fillRect(this.x + 5, this.y + 70, 5, 12);
+                    ctx.fillRect(this.x + 70, this.y + 70, 5, 12);
+                    
+                    // Spikes on back
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x + 15, this.y - 5, 6, 8);
+                    ctx.fillRect(this.x + 25, this.y - 8, 6, 12);
+                    ctx.fillRect(this.x + 35, this.y - 6, 6, 10);
+                    ctx.fillRect(this.x + 45, this.y - 7, 6, 11);
+                    ctx.fillRect(this.x + 55, this.y - 4, 6, 8);
+                }
+            };
+        } else {
+            // Jumping hooded figure
+            enemy = {
+                x: this.canvas.width + 50,
+                y: this.canvas.height - 140,
+                width: 70,
+                height: 100,
+                type: 'jumper',
+                jumpVelocity: 0,
+                onGround: true,
+                gravity: 0.6,
+                jumpPower: -12,
+                groundY: this.canvas.height - 140,
+                jumpTimer: 0,
                 
-                // Monster mouth
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 15, this.y + 35, 30, 8);
+                update: function(speed) {
+                    this.x -= speed * 1.2;
+                    
+                    // Jumping behavior
+                    this.jumpTimer++;
+                    if (this.jumpTimer > 90 && this.onGround && Math.random() > 0.7) {
+                        this.jumpVelocity = this.jumpPower;
+                        this.onGround = false;
+                        this.jumpTimer = 0;
+                    }
+                    
+                    // Jumping physics
+                    if (!this.onGround) {
+                        this.jumpVelocity += this.gravity;
+                        this.y += this.jumpVelocity;
+                        
+                        if (this.y >= this.groundY) {
+                            this.y = this.groundY;
+                            this.jumpVelocity = 0;
+                            this.onGround = true;
+                        }
+                    }
+                },
                 
-                // Monster teeth (larger)
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(this.x + 8, this.y + 40, 6, 12);
-                ctx.fillRect(this.x + 18, this.y + 40, 6, 12);
-                ctx.fillRect(this.x + 28, this.y + 40, 6, 12);
-                ctx.fillRect(this.x + 38, this.y + 40, 6, 12);
-                ctx.fillRect(this.x + 48, this.y + 40, 6, 12);
-                
-                // Monster claws
-                ctx.fillStyle = '#FFFF00';
-                ctx.fillRect(this.x + 5, this.y + 55, 3, 8);
-                ctx.fillRect(this.x + 52, this.y + 55, 3, 8);
-            }
-        };
+                draw: function(ctx) {
+                    // Body (hoodie)
+                    ctx.fillStyle = '#2F2F2F';
+                    ctx.fillRect(this.x + 10, this.y + 30, 50, 60);
+                    
+                    // Hood
+                    ctx.fillStyle = '#1A1A1A';
+                    ctx.fillRect(this.x + 5, this.y + 10, 60, 35);
+                    ctx.fillRect(this.x + 8, this.y + 5, 54, 25);
+                    
+                    // Hood shadow
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 15, this.y + 15, 40, 20);
+                    
+                    // Head (barely visible under hood)
+                    ctx.fillStyle = '#D2B48C';
+                    ctx.fillRect(this.x + 25, this.y + 20, 20, 20);
+                    
+                    // Cap backwards (under hood)
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(this.x + 20, this.y + 18, 30, 8);
+                    // Cap brim (backwards)
+                    ctx.fillRect(this.x + 18, this.y + 26, 8, 4);
+                    
+                    // BLACK sunglasses
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 27, this.y + 25, 16, 8);
+                    ctx.fillRect(this.x + 26, this.y + 26, 18, 6);
+                    // Bridge
+                    ctx.fillRect(this.x + 34, this.y + 28, 2, 2);
+                    
+                    // Arms
+                    ctx.fillStyle = '#2F2F2F';
+                    ctx.fillRect(this.x, this.y + 35, 15, 25);
+                    ctx.fillRect(this.x + 55, this.y + 35, 15, 25);
+                    
+                    // Hands
+                    ctx.fillStyle = '#D2B48C';
+                    ctx.fillRect(this.x + 2, this.y + 58, 11, 12);
+                    ctx.fillRect(this.x + 57, this.y + 58, 11, 12);
+                    
+                    // Legs
+                    ctx.fillStyle = '#000080';
+                    ctx.fillRect(this.x + 15, this.y + 85, 15, 25);
+                    ctx.fillRect(this.x + 40, this.y + 85, 15, 25);
+                    
+                    // Sneakers
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 12, this.y + 105, 21, 8);
+                    ctx.fillRect(this.x + 37, this.y + 105, 21, 8);
+                    
+                    // Hoodie strings
+                    ctx.fillStyle = '#CCCCCC';
+                    ctx.fillRect(this.x + 30, this.y + 35, 2, 8);
+                    ctx.fillRect(this.x + 38, this.y + 35, 2, 8);
+                }
+            };
+        }
         
         this.enemies.push(enemy);
     }
