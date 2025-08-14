@@ -11,7 +11,7 @@ class Game {
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = this.isMobile ? 4 : 2; // Even faster game speed on mobile
+        this.gameSpeed = this.isMobile ? 6 : 2; // 1.5x faster mobile speed (4 * 1.5 = 6)
         this.gameRunning = true;
         this.lives = 5;
         this.maxLives = 5;
@@ -429,6 +429,12 @@ class Game {
         this.enemies = [];
         this.bullets = [];
         this.spawnTimer = 0;
+        
+        // Power-ups and collectibles
+        this.powerUps = [];
+        this.collectibles = [];
+        this.powerUpSpawnTimer = 0;
+        this.collectibleSpawnTimer = 0;
 
         // Visual effects
         this.particles = [];
@@ -673,6 +679,20 @@ class Game {
         this.createTone(200, 0.3, 'triangle', 0.2);
         setTimeout(() => this.createTone(150, 0.4, 'sine', 0.2), 300);
         setTimeout(() => this.createTone(100, 0.6, 'triangle', 0.2), 600);
+    }
+    
+    playPowerUpSound() {
+        // Power-up sound - ascending tones
+        this.createTone(400, 0.2, 'sine', 0.3);
+        setTimeout(() => this.createTone(600, 0.2, 'sine', 0.3), 100);
+        setTimeout(() => this.createTone(800, 0.3, 'sine', 0.3), 200);
+    }
+    
+    playCollectibleSound() {
+        // Collectible sound - gentle chimes
+        this.createTone(523, 0.2, 'sine', 0.2); // C5
+        setTimeout(() => this.createTone(659, 0.2, 'sine', 0.2), 150); // E5
+        setTimeout(() => this.createTone(784, 0.2, 'sine', 0.2), 300); // G5
     }
 
     injectMobileStyles() {
@@ -2013,6 +2033,163 @@ class Game {
 
         this.enemies.push(enemy);
     }
+    
+    spawnPowerUp() {
+        const powerUp = {
+            x: this.canvas.width + 50,
+            y: this.canvas.height - 200 - Math.random() * 100, // Random height
+            width: 40,
+            height: 40,
+            type: 'energy',
+            
+            update: function(speed) {
+                this.x -= speed * 0.8; // Slower than enemies
+            },
+            
+            draw: function(ctx) {
+                // Energy power-up (lightning bolt)
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.moveTo(this.x + 10, this.y);
+                ctx.lineTo(this.x + 20, this.y + 15);
+                ctx.lineTo(this.x + 15, this.y + 15);
+                ctx.lineTo(this.x + 25, this.y + 40);
+                ctx.lineTo(this.x + 15, this.y + 25);
+                ctx.lineTo(this.x + 20, this.y + 25);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Glow effect
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        };
+        
+        this.powerUps.push(powerUp);
+    }
+    
+    spawnCollectible() {
+        const collectible = {
+            x: this.canvas.width + 50,
+            y: this.canvas.height - 180 - Math.random() * 80, // Random height
+            width: 25,
+            height: 25,
+            type: 'joint',
+            
+            update: function(speed) {
+                this.x -= speed * 0.6; // Even slower
+            },
+            
+            draw: function(ctx) {
+                // Marihuana plant leaf design
+                const centerX = this.x + 12;
+                const centerY = this.y + 12;
+                
+                // Main stem
+                ctx.fillStyle = '#228B22';
+                ctx.fillRect(centerX - 1, centerY + 5, 2, 8);
+                
+                // Central leaf (largest)
+                ctx.fillStyle = '#32CD32';
+                ctx.beginPath();
+                ctx.ellipse(centerX, centerY, 8, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Side leaves (serrated cannabis leaf shape)
+                ctx.fillStyle = '#228B22';
+                
+                // Left side leaves
+                ctx.beginPath();
+                ctx.ellipse(centerX - 6, centerY - 2, 4, 8, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.ellipse(centerX - 4, centerY + 3, 3, 6, -0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Right side leaves
+                ctx.beginPath();
+                ctx.ellipse(centerX + 6, centerY - 2, 4, 8, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.ellipse(centerX + 4, centerY + 3, 3, 6, 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Leaf details (serrated edges effect)
+                ctx.fillStyle = '#006400';
+                ctx.fillRect(centerX - 2, centerY - 3, 1, 2);
+                ctx.fillRect(centerX + 1, centerY - 5, 1, 2);
+                ctx.fillRect(centerX - 1, centerY + 2, 1, 2);
+                ctx.fillRect(centerX + 2, centerY, 1, 2);
+                
+                // Subtle glow effect
+                ctx.shadowColor = '#32CD32';
+                ctx.shadowBlur = 3;
+                ctx.strokeStyle = '#90EE90';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        };
+        
+        this.collectibles.push(collectible);
+    }
+    
+    checkPowerUpCollisions() {
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            
+            if (this.player.x < powerUp.x + powerUp.width &&
+                this.player.x + this.player.width > powerUp.x &&
+                this.player.y < powerUp.y + powerUp.height &&
+                this.player.y + this.player.height > powerUp.y) {
+                
+                // Give 100% energy
+                this.energy = 100;
+                
+                // Create particles effect
+                this.createExplosion(powerUp.x + powerUp.width/2, powerUp.y + powerUp.height/2, '#FFD700');
+                
+                // Play sound effect
+                this.playPowerUpSound();
+                
+                // Remove power-up
+                this.powerUps.splice(i, 1);
+            }
+        }
+    }
+    
+    checkCollectibleCollisions() {
+        for (let i = this.collectibles.length - 1; i >= 0; i--) {
+            const collectible = this.collectibles[i];
+            
+            if (this.player.x < collectible.x + collectible.width &&
+                this.player.x + this.player.width > collectible.x &&
+                this.player.y < collectible.y + collectible.height &&
+                this.player.y + this.player.height > collectible.y) {
+                
+                // Increase hearts (max 5)
+                if (this.lives < this.maxLives) {
+                    this.lives++;
+                    this.updateHeartsDisplay();
+                }
+                
+                // Create particles effect
+                this.createExplosion(collectible.x + collectible.width/2, collectible.y + collectible.height/2, '#228B22');
+                
+                // Play sound effect
+                this.playCollectibleSound();
+                
+                // Remove collectible
+                this.collectibles.splice(i, 1);
+            }
+        }
+    }
 
     checkCollisions() {
         if (this.invulnerable) return; // Skip collision check if invulnerable
@@ -2320,6 +2497,20 @@ class Game {
             this.spawnEnemy();
             this.spawnTimer = 0;
         }
+        
+        // Spawn power-ups (less frequent)
+        this.powerUpSpawnTimer++;
+        if (this.powerUpSpawnTimer > 900) { // Spawn every 15 seconds
+            this.spawnPowerUp();
+            this.powerUpSpawnTimer = 0;
+        }
+        
+        // Spawn collectibles (moderate frequency)
+        this.collectibleSpawnTimer++;
+        if (this.collectibleSpawnTimer > 300) { // Spawn every 5 seconds
+            this.spawnCollectible();
+            this.collectibleSpawnTimer = 0;
+        }
 
         // Update enemies
         this.enemies.forEach(enemy => {
@@ -2328,10 +2519,24 @@ class Game {
 
         // Remove off-screen enemies
         this.enemies = this.enemies.filter(enemy => enemy.x > -100);
+        
+        // Update power-ups
+        this.powerUps.forEach(powerUp => {
+            powerUp.update(this.gameSpeed);
+        });
+        this.powerUps = this.powerUps.filter(powerUp => powerUp.x > -100);
+        
+        // Update collectibles
+        this.collectibles.forEach(collectible => {
+            collectible.update(this.gameSpeed);
+        });
+        this.collectibles = this.collectibles.filter(collectible => collectible.x > -100);
 
         // Check collisions
         this.checkCollisions();
         this.checkBulletCollisions();
+        this.checkPowerUpCollisions();
+        this.checkCollectibleCollisions();
 
         // TEMPORARY: Disable UI updates to fix deployment error
         console.log('DEPLOYMENT FIX: UI updates disabled temporarily');
@@ -2433,6 +2638,12 @@ class Game {
 
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
+        
+        // Draw power-ups
+        this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
+        
+        // Draw collectibles
+        this.collectibles.forEach(collectible => collectible.draw(this.ctx));
 
         // Draw bullets
         this.bullets.forEach(bullet => bullet.draw(this.ctx));
