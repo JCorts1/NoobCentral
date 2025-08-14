@@ -455,7 +455,11 @@ class Game {
         this.updateCharacterSelectionUI();
         
         // Initialize hearts display
-        this.updateHeartsDisplay();
+        try {
+            this.updateHeartsDisplay();
+        } catch (error) {
+            console.error('Error initializing hearts display:', error);
+        }
     }
 
     createParallaxLayers() {
@@ -701,6 +705,8 @@ class Game {
 
     updateHeartsDisplay() {
         const heartsContainer = document.getElementById('hearts');
+        if (!heartsContainer) return; // Exit if element doesn't exist
+        
         heartsContainer.innerHTML = '';
         
         for (let i = 0; i < this.maxLives; i++) {
@@ -2005,8 +2011,12 @@ class Game {
 
     gameOver() {
         this.gameRunning = false;
-        document.getElementById('finalScore').textContent = Math.floor(this.distance);
-        document.getElementById('gameOver').style.display = 'block';
+        
+        const finalScoreEl = document.getElementById('finalScore');
+        const gameOverEl = document.getElementById('gameOver');
+        
+        if (finalScoreEl) finalScoreEl.textContent = Math.floor(this.distance);
+        if (gameOverEl) gameOverEl.style.display = 'block';
         
         // Play game over sound
         this.playGameOverSound();
@@ -2256,10 +2266,17 @@ class Game {
         this.checkCollisions();
         this.checkBulletCollisions();
 
-        // Update UI
-        document.getElementById('score').textContent = `Distance: ${Math.floor(this.distance)}m`;
-        document.getElementById('energy').textContent = `Energy: 100%`;
-        // Character name removed from UI
+        // Update UI with error checking
+        try {
+            const scoreEl = document.getElementById('score');
+            const energyEl = document.getElementById('energy');
+            
+            if (scoreEl) scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m`;
+            if (energyEl) energyEl.textContent = `Energy: 100%`;
+            // Character name removed from UI
+        } catch (error) {
+            console.error('Error updating UI:', error);
+        }
     }
 
     draw() {
@@ -2392,11 +2409,15 @@ class Game {
 // Start the game
 window.addEventListener('load', () => {
     console.log('Window loaded, creating game...');
-    try {
-        new Game();
-        console.log('Game created successfully');
-    } catch (error) {
-        console.error('Error creating game:', error);
-        alert('Error creating game: ' + error.message);
-    }
+    
+    // Small delay to ensure DOM is fully ready
+    setTimeout(() => {
+        try {
+            new Game();
+            console.log('Game created successfully');
+        } catch (error) {
+            console.error('Error creating game:', error);
+            alert('Error creating game: ' + error.message);
+        }
+    }, 100);
 });
