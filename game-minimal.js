@@ -528,22 +528,29 @@ class Game {
     shoot() {
         const bullet = {
             x: this.player.x + this.player.width,
-            y: this.player.y + this.player.height / 2,
-            width: 8,
-            height: 3,
-            speed: 8,
+            y: this.player.y + this.player.height / 2 - 3,
+            width: 12,
+            height: 6,
+            speed: 10,
             
             update: function() {
                 this.x += this.speed;
             },
             
             draw: function(ctx) {
+                // Main bullet body
                 ctx.fillStyle = '#FFFF00';
                 ctx.fillRect(this.x, this.y, this.width, this.height);
                 
+                // Bullet core (brighter)
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(this.x + 2, this.y + 1, this.width - 4, this.height - 2);
+                
                 // Add bullet trail
                 ctx.fillStyle = '#FFA500';
-                ctx.fillRect(this.x - 5, this.y + 1, 5, 1);
+                ctx.fillRect(this.x - 8, this.y + 2, 8, 2);
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(this.x - 12, this.y + 2, 4, 2);
             }
         };
         
@@ -553,30 +560,45 @@ class Game {
     spawnEnemy() {
         const enemy = {
             x: this.canvas.width + 50,
-            y: this.canvas.height - 100,
-            width: 40,
-            height: 40,
+            y: this.canvas.height - 120,
+            width: 60,
+            height: 60,
             
             update: function(speed) {
                 this.x -= speed * 1.5; // Enemies move faster than buildings
             },
             
             draw: function(ctx) {
-                // Draw pixelated monster
+                // Draw pixelated monster (larger)
                 ctx.fillStyle = '#8B0000'; // Dark red
                 ctx.fillRect(this.x, this.y, this.width, this.height);
                 
-                // Monster eyes
+                // Monster eyes (larger)
                 ctx.fillStyle = '#FF0000';
-                ctx.fillRect(this.x + 8, this.y + 8, 6, 6);
-                ctx.fillRect(this.x + 26, this.y + 8, 6, 6);
+                ctx.fillRect(this.x + 12, this.y + 12, 8, 8);
+                ctx.fillRect(this.x + 35, this.y + 12, 8, 8);
                 
-                // Monster teeth
+                // Monster pupils
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 14, this.y + 14, 4, 4);
+                ctx.fillRect(this.x + 37, this.y + 14, 4, 4);
+                
+                // Monster mouth
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 15, this.y + 35, 30, 8);
+                
+                // Monster teeth (larger)
                 ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(this.x + 5, this.y + 25, 4, 8);
-                ctx.fillRect(this.x + 15, this.y + 25, 4, 8);
-                ctx.fillRect(this.x + 25, this.y + 25, 4, 8);
-                ctx.fillRect(this.x + 31, this.y + 25, 4, 8);
+                ctx.fillRect(this.x + 8, this.y + 40, 6, 12);
+                ctx.fillRect(this.x + 18, this.y + 40, 6, 12);
+                ctx.fillRect(this.x + 28, this.y + 40, 6, 12);
+                ctx.fillRect(this.x + 38, this.y + 40, 6, 12);
+                ctx.fillRect(this.x + 48, this.y + 40, 6, 12);
+                
+                // Monster claws
+                ctx.fillStyle = '#FFFF00';
+                ctx.fillRect(this.x + 5, this.y + 55, 3, 8);
+                ctx.fillRect(this.x + 52, this.y + 55, 3, 8);
             }
         };
         
@@ -603,22 +625,30 @@ class Game {
     }
     
     checkBulletCollisions() {
-        this.bullets.forEach((bullet, bulletIndex) => {
-            this.enemies.forEach((enemy, enemyIndex) => {
-                if (bullet.x < enemy.x + enemy.width &&
-                    bullet.x + bullet.width > enemy.x &&
-                    bullet.y < enemy.y + enemy.height &&
-                    bullet.y + bullet.height > enemy.y) {
+        for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+            const bullet = this.bullets[bulletIndex];
+            
+            for (let enemyIndex = this.enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+                const enemy = this.enemies[enemyIndex];
+                
+                // More generous collision detection
+                if (bullet.x + bullet.width >= enemy.x &&
+                    bullet.x <= enemy.x + enemy.width &&
+                    bullet.y + bullet.height >= enemy.y &&
+                    bullet.y <= enemy.y + enemy.height) {
                     
                     // Hit! Remove both bullet and enemy
                     this.bullets.splice(bulletIndex, 1);
                     this.enemies.splice(enemyIndex, 1);
                     
                     // Add points for killing enemy
-                    this.distance += 5;
+                    this.distance += 10;
+                    
+                    console.log('Enemy hit! Bullet collision detected');
+                    break; // Exit enemy loop since bullet is destroyed
                 }
-            });
-        });
+            }
+        }
     }
     
     update() {
