@@ -23,13 +23,18 @@ class Game {
         this.performanceMode = this.isMobile ? 'low' : 'high';
         this.frameCount = 0;
         this.lastFrameTime = performance.now();
-        this.targetFPS = this.isMobile ? 30 : 60;
+        this.targetFPS = this.isMobile ? 45 : 60;
+        this.skipFrames = 0;
 
-        // Optimize canvas size for mobile
+        // Better mobile optimizations - maintain visual quality
         if (this.isMobile) {
-            this.canvas.width = 400;
-            this.canvas.height = 300;
+            this.canvas.width = 600;
+            this.canvas.height = 400;
             this.ctx.imageSmoothingEnabled = false;
+            // Smart optimizations that keep quality
+            this.mobileOptimizations = true;
+        } else {
+            this.mobileOptimizations = false;
         }
 
         // Load saved character or default to Juan
@@ -115,6 +120,7 @@ class Game {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
+                        // Keep building details but optimize for mobile
                         // Main building structure
                         ctx.fillStyle = '#3A3A3A';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -201,6 +207,7 @@ class Game {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
+                        // Keep building details but optimize for mobile
                         // Main tower structure
                         ctx.fillStyle = '#2F2F2F';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -272,6 +279,7 @@ class Game {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
+                        // Keep building details but optimize for mobile
                         // Main building (cream/white colonial)
                         ctx.fillStyle = '#F5F5DC';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -356,6 +364,7 @@ class Game {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
+                        // Keep building details but optimize for mobile
                         // Ground floor (commercial)
                         ctx.fillStyle = '#8B4513';
                         ctx.fillRect(this.x, this.y + this.height - 60, this.width, 60);
@@ -734,7 +743,48 @@ class Game {
                 ctx.fill();
             },
 
+            drawSimpleCharacter: function(ctx, hairColor, skinColor, shirtColor, legOffset, isJumping) {
+                // Super simplified character for mobile performance
+                // Hair
+                ctx.fillStyle = hairColor;
+                ctx.fillRect(this.x + 20, this.y + 10, 40, 20);
+                
+                // Head
+                ctx.fillStyle = skinColor;
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
+                
+                // Eyes
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 30, this.y + 23, 4, 4);
+                ctx.fillRect(this.x + 46, this.y + 23, 4, 4);
+                
+                // Body
+                ctx.fillStyle = shirtColor;
+                ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
+                
+                // Arms
+                ctx.fillStyle = skinColor;
+                ctx.fillRect(this.x + 5, this.y + 50, 18, 30);
+                ctx.fillRect(this.x + 57, this.y + 50, 18, 30);
+                
+                // Legs with animation
+                ctx.fillStyle = '#0066CC';
+                if (isJumping) {
+                    ctx.fillRect(this.x + 25, this.y + 90, 12, 30);
+                    ctx.fillRect(this.x + 43, this.y + 90, 12, 30);
+                } else {
+                    ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);
+                    ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);
+                }
+                
+                // Shoes
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 23 + (isJumping ? 0 : legOffset), this.y + 115, 16, 8);
+                ctx.fillRect(this.x + 41 + (isJumping ? 0 : -legOffset), this.y + 115, 16, 8);
+            },
+
             drawJuan: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Keep full character detail on all devices
                 // Long BLACK hair for Juan with sway animation
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(this.x + 15 + hairSway, this.y + 10, 50, 25); // Top hair
@@ -869,6 +919,7 @@ class Game {
             },
 
             drawKim: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Keep full character detail on all devices
                 // Long BROWN hair with bounce animation
                 const hairBounce = Math.sin(this.animFrame * 0.12) * 1.5;
                 ctx.fillStyle = '#8B4513';
@@ -1031,6 +1082,7 @@ class Game {
             },
 
             drawJulian: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Keep full character detail on all devices
                 // Head with breathing animation
                 ctx.fillStyle = '#FDBCB4';
                 ctx.fillRect(this.x + 25, this.y + 15 + breatheOffset, 30, 30);
@@ -1180,6 +1232,7 @@ class Game {
             },
 
             drawJay: function(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping) {
+                // Keep full character detail on all devices
                 // Head (LATINO skin tone)
                 ctx.fillStyle = '#D2B48C';
                 ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
@@ -1908,9 +1961,9 @@ class Game {
     }
 
     createExplosion(x, y) {
-        // Reduce particle count on mobile for performance
-        const particleCount = this.performanceMode === 'low' ? 8 : 15;
-        const sparkCount = this.performanceMode === 'low' ? 4 : 8;
+        // Smart particle reduction for mobile performance
+        const particleCount = this.mobileOptimizations ? 6 : 15;
+        const sparkCount = this.mobileOptimizations ? 3 : 8;
         
         // Create multiple explosion particles
         for (let i = 0; i < particleCount; i++) {
@@ -1933,8 +1986,8 @@ class Game {
     }
 
     createJumpParticles(x, y) {
-        // Reduce particles on mobile
-        const particleCount = this.performanceMode === 'low' ? 2 : 5;
+        // Smart particle reduction for mobile performance
+        const particleCount = this.mobileOptimizations ? 2 : 5;
         
         // Dust particles when jumping
         for (let i = 0; i < particleCount; i++) {
@@ -1945,8 +1998,8 @@ class Game {
     }
 
     createMuzzleFlash(x, y) {
-        // Reduce particles on mobile
-        const particleCount = this.performanceMode === 'low' ? 1 : 3;
+        // Smart particle reduction for mobile performance
+        const particleCount = this.mobileOptimizations ? 1 : 3;
         
         // Muzzle flash when shooting
         for (let i = 0; i < particleCount; i++) {
@@ -1957,8 +2010,12 @@ class Game {
     }
 
     addScreenShake(intensity, duration) {
-        this.screenShake.intensity = intensity;
-        this.screenShake.duration = duration;
+        // Reduce screen shake intensity on mobile
+        const mobileIntensity = this.mobileOptimizations ? intensity * 0.5 : intensity;
+        const mobileDuration = this.mobileOptimizations ? duration * 0.7 : duration;
+        
+        this.screenShake.intensity = mobileIntensity;
+        this.screenShake.duration = mobileDuration;
     }
 
     updateScreenShake() {
@@ -1973,11 +2030,15 @@ class Game {
     }
 
     addFlashEffect(color, alpha, duration) {
+        // Reduce flash effect intensity on mobile
+        const mobileAlpha = this.mobileOptimizations ? alpha * 0.5 : alpha;
+        const mobileDuration = this.mobileOptimizations ? duration * 0.6 : duration;
+        
         this.flashEffect.active = true;
         this.flashEffect.color = color;
-        this.flashEffect.alpha = alpha;
-        this.flashEffect.duration = duration;
-        this.flashEffect.maxDuration = duration;
+        this.flashEffect.alpha = mobileAlpha;
+        this.flashEffect.duration = mobileDuration;
+        this.flashEffect.maxDuration = mobileDuration;
     }
 
     updateFlashEffect() {
@@ -2041,23 +2102,25 @@ class Game {
         this.particles.forEach(particle => particle.update());
         this.particles = this.particles.filter(particle => particle.life > 0);
 
-        // Update parallax background layers
-        this.backgroundLayers.forEach(layer => {
-            layer.objects.forEach(obj => {
-                obj.x -= this.gameSpeed * obj.speed;
-                
-                // Reset position when off screen
-                if (obj.x < -obj.width - 100) {
-                    if (layer.name === 'mountains') {
-                        obj.x = this.canvas.width + Math.random() * 400;
-                    } else if (layer.name === 'distantBuildings') {
-                        obj.x = this.canvas.width + Math.random() * 300;
-                    } else if (layer.name === 'clouds') {
-                        obj.x = this.canvas.width + Math.random() * 500;
+        // Update parallax background layers (skip some frames on mobile)
+        if (!this.mobileOptimizations || this.frameCount % 2 === 0) {
+            this.backgroundLayers.forEach(layer => {
+                layer.objects.forEach(obj => {
+                    obj.x -= this.gameSpeed * obj.speed;
+                    
+                    // Reset position when off screen
+                    if (obj.x < -obj.width - 100) {
+                        if (layer.name === 'mountains') {
+                            obj.x = this.canvas.width + Math.random() * 400;
+                        } else if (layer.name === 'distantBuildings') {
+                            obj.x = this.canvas.width + Math.random() * 300;
+                        } else if (layer.name === 'clouds') {
+                            obj.x = this.canvas.width + Math.random() * 500;
+                        }
                     }
-                }
+                });
             });
-        });
+        }
 
         // Update buildings
         this.buildings.forEach(building => {
@@ -2141,7 +2204,7 @@ class Game {
         this.ctx.arc(this.canvas.width - 100, 80, 25, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Draw parallax background layers (back to front)
+        // Draw parallax background layers (keep for visual quality)
         this.backgroundLayers.forEach(layer => {
             layer.draw(this.ctx, layer.objects);
         });
