@@ -60,107 +60,345 @@ class Game {
             }
         });
         
-        // Create buildings with more variety
-        for (let i = 0; i < 15; i++) {
+        // Create background buildings (far layer)
+        this.backgroundBuildings = [];
+        for (let i = 0; i < 20; i++) {
+            this.backgroundBuildings.push({
+                x: 400 + i * 150,
+                y: this.canvas.height - 200 - Math.random() * 100,
+                width: 120,
+                height: 200 + Math.random() * 100,
+                speed: 0.3,
+                update: function(speed) {
+                    this.x -= speed * this.speed;
+                },
+                draw: function(ctx) {
+                    ctx.fillStyle = '#2A2A2A';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Distant windows
+                    ctx.fillStyle = '#444444';
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 4; col++) {
+                            if (Math.random() > 0.6) {
+                                ctx.fillRect(this.x + 10 + col * 25, this.y + 10 + row * 20, 15, 12);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create main detailed buildings (much larger and more detailed)
+        for (let i = 0; i < 12; i++) {
             const buildingType = Math.random();
             let building;
             
-            if (buildingType < 0.3) {
-                // Apartment building
+            if (buildingType < 0.25) {
+                // Large residential building
                 building = {
-                    x: 400 + i * 120,
-                    y: this.canvas.height - 250 - Math.random() * 150,
-                    width: 100,
-                    height: 250 + Math.random() * 150,
-                    type: 'apartment',
+                    x: 400 + i * 200,
+                    y: this.canvas.height - 400 - Math.random() * 200,
+                    width: 180,
+                    height: 400 + Math.random() * 200,
+                    type: 'residential',
+                    windowLights: this.generateWindowLights(6, 8),
                     update: function(speed) {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
-                        // Building body
-                        ctx.fillStyle = '#4A4A4A';
+                        // Main building structure
+                        ctx.fillStyle = '#3A3A3A';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
                         
-                        // Windows (3x3 grid)
-                        ctx.fillStyle = '#FFFF88';
-                        for (let row = 0; row < 6; row++) {
-                            for (let col = 0; col < 3; col++) {
-                                if (Math.random() > 0.3) { // 70% chance window is lit
-                                    ctx.fillRect(
-                                        this.x + 15 + col * 25, 
-                                        this.y + 20 + row * 30, 
-                                        15, 20
-                                    );
+                        // Building facade
+                        ctx.fillStyle = '#4A4A4A';
+                        ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 5);
+                        
+                        // Balconies
+                        for (let floor = 1; floor < 12; floor++) {
+                            ctx.fillStyle = '#555555';
+                            ctx.fillRect(this.x + 10, this.y + floor * 35, this.width - 20, 4);
+                            
+                            // Balcony railings
+                            ctx.fillStyle = '#666666';
+                            for (let r = 0; r < 15; r++) {
+                                ctx.fillRect(this.x + 15 + r * 10, this.y + floor * 35 - 8, 2, 12);
+                            }
+                        }
+                        
+                        // Windows with detailed frames
+                        for (let floor = 0; floor < 12; floor++) {
+                            for (let apt = 0; apt < 6; apt++) {
+                                const windowX = this.x + 20 + apt * 25;
+                                const windowY = this.y + 15 + floor * 35;
+                                
+                                // Window frame
+                                ctx.fillStyle = '#666666';
+                                ctx.fillRect(windowX - 2, windowY - 2, 22, 26);
+                                
+                                // Window glass
+                                if (this.windowLights[floor] && this.windowLights[floor][apt]) {
+                                    ctx.fillStyle = '#FFFF99';
+                                } else {
+                                    ctx.fillStyle = '#1A1A2E';
+                                }
+                                ctx.fillRect(windowX, windowY, 18, 22);
+                                
+                                // Window cross bars
+                                ctx.fillStyle = '#888888';
+                                ctx.fillRect(windowX + 8, windowY, 2, 22);
+                                ctx.fillRect(windowX, windowY + 10, 18, 2);
+                                
+                                // Window details (curtains, plants)
+                                if (this.windowLights[floor] && this.windowLights[floor][apt] && Math.random() > 0.7) {
+                                    ctx.fillStyle = '#FF6B6B';
+                                    ctx.fillRect(windowX + 2, windowY + 2, 4, 18);
+                                    ctx.fillRect(windowX + 12, windowY + 2, 4, 18);
                                 }
                             }
                         }
                         
-                        // Rooftop
+                        // Rooftop details
                         ctx.fillStyle = '#654321';
-                        ctx.fillRect(this.x, this.y, this.width, 15);
+                        ctx.fillRect(this.x, this.y, this.width, 20);
+                        
+                        // Antennas and equipment
+                        ctx.fillStyle = '#888888';
+                        ctx.fillRect(this.x + 30, this.y - 15, 4, 15);
+                        ctx.fillRect(this.x + 80, this.y - 25, 6, 25);
+                        ctx.fillRect(this.x + 130, this.y - 10, 3, 10);
+                        
+                        // Air conditioning units
+                        ctx.fillStyle = '#CCCCCC';
+                        ctx.fillRect(this.x + 50, this.y + 5, 12, 8);
+                        ctx.fillRect(this.x + 100, this.y + 5, 12, 8);
+                        
+                        // Building name/number
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = '14px Arial';
+                        ctx.fillText((100 + i).toString(), this.x + this.width/2 - 10, this.y + this.height - 20);
                     }
                 };
-            } else if (buildingType < 0.6) {
-                // Office building
+            } else if (buildingType < 0.5) {
+                // Modern office tower
                 building = {
-                    x: 400 + i * 120,
-                    y: this.canvas.height - 300 - Math.random() * 200,
-                    width: 90,
-                    height: 300 + Math.random() * 200,
+                    x: 400 + i * 200,
+                    y: this.canvas.height - 500 - Math.random() * 150,
+                    width: 160,
+                    height: 500 + Math.random() * 150,
                     type: 'office',
+                    windowLights: this.generateWindowLights(5, 15),
                     update: function(speed) {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
-                        // Building body
-                        ctx.fillStyle = '#333333';
+                        // Main tower structure
+                        ctx.fillStyle = '#2F2F2F';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
                         
-                        // Glass windows
-                        ctx.fillStyle = '#87CEEB';
-                        for (let row = 0; row < 8; row++) {
-                            for (let col = 0; col < 2; col++) {
-                                ctx.fillRect(
-                                    this.x + 20 + col * 35, 
-                                    this.y + 15 + row * 25, 
-                                    25, 20
-                                );
+                        // Glass facade gradient
+                        const gradient = ctx.createLinearGradient(this.x, 0, this.x + this.width, 0);
+                        gradient.addColorStop(0, '#4A4A4A');
+                        gradient.addColorStop(0.5, '#6A6A6A');
+                        gradient.addColorStop(1, '#4A4A4A');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(this.x + 8, this.y + 8, this.width - 16, this.height - 8);
+                        
+                        // Reflective glass windows
+                        for (let floor = 0; floor < 18; floor++) {
+                            for (let col = 0; col < 5; col++) {
+                                const windowX = this.x + 15 + col * 30;
+                                const windowY = this.y + 20 + floor * 28;
+                                
+                                // Window frame
+                                ctx.fillStyle = '#333333';
+                                ctx.fillRect(windowX - 1, windowY - 1, 26, 24);
+                                
+                                // Glass reflection
+                                if (this.windowLights[floor] && this.windowLights[floor][col]) {
+                                    ctx.fillStyle = '#87CEEB';
+                                } else {
+                                    ctx.fillStyle = '#1E3A5F';
+                                }
+                                ctx.fillRect(windowX, windowY, 24, 22);
+                                
+                                // Reflection highlights
+                                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                                ctx.fillRect(windowX + 2, windowY + 2, 8, 18);
                             }
                         }
                         
-                        // Building outline
-                        ctx.strokeStyle = '#222222';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(this.x, this.y, this.width, this.height);
+                        // Building logo/sign
+                        ctx.fillStyle = '#FF6B35';
+                        ctx.fillRect(this.x + 20, this.y + 30, this.width - 40, 25);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = '12px Arial';
+                        ctx.fillText('MEDELLÍN CORP', this.x + 35, this.y + 47);
+                        
+                        // Rooftop elements
+                        ctx.fillStyle = '#444444';
+                        ctx.fillRect(this.x, this.y, this.width, 15);
+                        
+                        // Satellite dishes and equipment
+                        ctx.fillStyle = '#CCCCCC';
+                        ctx.fillRect(this.x + 40, this.y - 12, 15, 12);
+                        ctx.fillRect(this.x + 100, this.y - 8, 10, 8);
+                        
+                        // Communication tower
+                        ctx.fillStyle = '#FF0000';
+                        ctx.fillRect(this.x + this.width/2 - 2, this.y - 40, 4, 40);
+                        ctx.fillRect(this.x + this.width/2 - 1, this.y - 45, 2, 5);
                     }
                 };
-            } else {
-                // Small shop/house
+            } else if (buildingType < 0.75) {
+                // Colombian colonial style building
                 building = {
-                    x: 400 + i * 120,
-                    y: this.canvas.height - 150 - Math.random() * 100,
-                    width: 70,
-                    height: 150 + Math.random() * 100,
-                    type: 'shop',
+                    x: 400 + i * 200,
+                    y: this.canvas.height - 300 - Math.random() * 100,
+                    width: 140,
+                    height: 300 + Math.random() * 100,
+                    type: 'colonial',
+                    windowLights: this.generateWindowLights(4, 8),
                     update: function(speed) {
                         this.x -= speed;
                     },
                     draw: function(ctx) {
-                        // Building body
-                        ctx.fillStyle = '#8B4513';
+                        // Main building (cream/white colonial)
+                        ctx.fillStyle = '#F5F5DC';
                         ctx.fillRect(this.x, this.y, this.width, this.height);
                         
-                        // Door
-                        ctx.fillStyle = '#654321';
-                        ctx.fillRect(this.x + 25, this.y + this.height - 40, 20, 40);
+                        // Colonial architectural details
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x, this.y, this.width, 12); // Top trim
+                        ctx.fillRect(this.x, this.y + this.height - 12, this.width, 12); // Bottom trim
                         
-                        // Window
-                        ctx.fillStyle = '#FFFF88';
-                        ctx.fillRect(this.x + 10, this.y + 20, 15, 15);
+                        // Vertical columns
+                        for (let col = 0; col < 3; col++) {
+                            ctx.fillStyle = '#D2B48C';
+                            ctx.fillRect(this.x + 20 + col * 40, this.y + 12, 8, this.height - 24);
+                        }
                         
-                        // Roof
-                        ctx.fillStyle = '#CC0000';
+                        // Ornate windows with shutters
+                        for (let floor = 0; floor < 6; floor++) {
+                            for (let col = 0; col < 4; col++) {
+                                const windowX = this.x + 15 + col * 30;
+                                const windowY = this.y + 25 + floor * 40;
+                                
+                                // Window arch
+                                ctx.fillStyle = '#8B4513';
+                                ctx.fillRect(windowX - 2, windowY - 5, 24, 5);
+                                ctx.fillRect(windowX - 2, windowY, 2, 25);
+                                ctx.fillRect(windowX + 20, windowY, 2, 25);
+                                ctx.fillRect(windowX - 2, windowY + 25, 24, 2);
+                                
+                                // Window glass
+                                if (this.windowLights[floor] && this.windowLights[floor][col]) {
+                                    ctx.fillStyle = '#FFFF99';
+                                } else {
+                                    ctx.fillStyle = '#2F4F4F';
+                                }
+                                ctx.fillRect(windowX, windowY, 20, 25);
+                                
+                                // Shutters
+                                ctx.fillStyle = '#228B22';
+                                ctx.fillRect(windowX - 6, windowY, 4, 25);
+                                ctx.fillRect(windowX + 22, windowY, 4, 25);
+                                
+                                // Window bars (iron work)
+                                ctx.fillStyle = '#444444';
+                                ctx.fillRect(windowX + 9, windowY, 2, 25);
+                                for (let bar = 0; bar < 3; bar++) {
+                                    ctx.fillRect(windowX, windowY + 5 + bar * 8, 20, 1);
+                                }
+                            }
+                        }
+                        
+                        // Balconies
+                        for (let floor = 1; floor < 4; floor++) {
+                            ctx.fillStyle = '#8B4513';
+                            ctx.fillRect(this.x + 10, this.y + 15 + floor * 80, this.width - 20, 6);
+                            
+                            // Balcony railing
+                            ctx.fillStyle = '#444444';
+                            for (let r = 0; r < 12; r++) {
+                                ctx.fillRect(this.x + 15 + r * 10, this.y + 10 + floor * 80, 2, 15);
+                            }
+                        }
+                        
+                        // Red tile roof
+                        ctx.fillStyle = '#CD853F';
                         ctx.fillRect(this.x - 5, this.y, this.width + 10, 15);
+                        ctx.fillStyle = '#A0522D';
+                        for (let tile = 0; tile < 15; tile++) {
+                            ctx.fillRect(this.x - 5 + tile * 10, this.y, 8, 15);
+                        }
+                    }
+                };
+            } else {
+                // Modern mixed-use building
+                building = {
+                    x: 400 + i * 200,
+                    y: this.canvas.height - 350 - Math.random() * 150,
+                    width: 170,
+                    height: 350 + Math.random() * 150,
+                    type: 'mixed',
+                    windowLights: this.generateWindowLights(5, 10),
+                    update: function(speed) {
+                        this.x -= speed;
+                    },
+                    draw: function(ctx) {
+                        // Ground floor (commercial)
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x, this.y + this.height - 60, this.width, 60);
+                        
+                        // Shop windows
+                        ctx.fillStyle = '#FFFF99';
+                        ctx.fillRect(this.x + 10, this.y + this.height - 45, 40, 30);
+                        ctx.fillRect(this.x + 60, this.y + this.height - 45, 40, 30);
+                        ctx.fillRect(this.x + 110, this.y + this.height - 45, 40, 30);
+                        
+                        // Shop signs
+                        ctx.fillStyle = '#FF6B35';
+                        ctx.fillRect(this.x + 10, this.y + this.height - 55, 40, 8);
+                        ctx.fillRect(this.x + 60, this.y + this.height - 55, 40, 8);
+                        ctx.fillRect(this.x + 110, this.y + this.height - 55, 40, 8);
+                        
+                        // Upper floors (residential)
+                        ctx.fillStyle = '#696969';
+                        ctx.fillRect(this.x, this.y, this.width, this.height - 60);
+                        
+                        // Residential windows
+                        for (let floor = 0; floor < 8; floor++) {
+                            for (let apt = 0; apt < 5; apt++) {
+                                const windowX = this.x + 15 + apt * 30;
+                                const windowY = this.y + 20 + floor * 35;
+                                
+                                // Window frame
+                                ctx.fillStyle = '#444444';
+                                ctx.fillRect(windowX - 1, windowY - 1, 22, 26);
+                                
+                                // Window
+                                if (this.windowLights[floor] && this.windowLights[floor][apt]) {
+                                    ctx.fillStyle = '#FFFF99';
+                                } else {
+                                    ctx.fillStyle = '#1A1A2E';
+                                }
+                                ctx.fillRect(windowX, windowY, 20, 24);
+                                
+                                // AC units
+                                if (Math.random() > 0.7) {
+                                    ctx.fillStyle = '#CCCCCC';
+                                    ctx.fillRect(windowX + 22, windowY + 10, 8, 6);
+                                }
+                            }
+                        }
+                        
+                        // Building entrance
+                        ctx.fillStyle = '#654321';
+                        ctx.fillRect(this.x + this.width/2 - 15, this.y + this.height - 60, 30, 60);
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x + this.width/2 - 12, this.y + this.height - 55, 24, 50);
                     }
                 };
             }
@@ -178,6 +416,17 @@ class Game {
         
         console.log('Starting game loop...');
         this.gameLoop();
+    }
+    
+    generateWindowLights(cols, rows) {
+        const lights = [];
+        for (let row = 0; row < rows; row++) {
+            lights[row] = [];
+            for (let col = 0; col < cols; col++) {
+                lights[row][col] = Math.random() > 0.4; // 60% chance light is on
+            }
+        }
+        return lights;
     }
     
     createPlayer() {
@@ -656,6 +905,14 @@ class Game {
         
         this.distance += this.gameSpeed * 0.1;
         
+        // Update background buildings
+        this.backgroundBuildings.forEach(building => {
+            building.update(this.gameSpeed);
+            if (building.x < -150) {
+                building.x = this.canvas.width + Math.random() * 300;
+            }
+        });
+        
         // Update buildings
         this.buildings.forEach(building => {
             building.update(this.gameSpeed);
@@ -664,7 +921,7 @@ class Game {
         // Reset buildings that go off screen
         this.buildings.forEach(building => {
             if (building.x < -200) {
-                building.x = this.canvas.width + Math.random() * 200;
+                building.x = this.canvas.width + Math.random() * 400;
             }
         });
         
@@ -709,19 +966,72 @@ class Game {
     }
     
     draw() {
-        // Clear screen with night sky
-        this.ctx.fillStyle = '#1a1a2e';
+        // Clear screen with enhanced night sky gradient
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, '#0f0f23');
+        gradient.addColorStop(0.7, '#1a1a2e');
+        gradient.addColorStop(1, '#2a2a3e');
+        this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw ground
-        this.ctx.fillStyle = '#666';
-        this.ctx.fillRect(0, this.canvas.height - 50, this.canvas.width, 50);
+        // Add stars
+        this.ctx.fillStyle = '#FFFFFF';
+        for (let i = 0; i < 50; i++) {
+            const x = (i * 13 + this.distance * 0.1) % this.canvas.width;
+            const y = (i * 7) % (this.canvas.height * 0.4);
+            if (Math.sin(this.distance * 0.01 + i) > 0.8) {
+                this.ctx.fillRect(x, y, 1, 1);
+            }
+        }
+        
+        // Draw moon
+        this.ctx.fillStyle = '#F0F0F0';
+        this.ctx.beginPath();
+        this.ctx.arc(this.canvas.width - 100, 80, 25, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Draw background buildings (far layer for depth)
+        this.backgroundBuildings.forEach(building => building.draw(this.ctx));
         
         // Draw city elements (welcome sign)
         this.cityElements.forEach(element => element.draw(this.ctx));
         
-        // Draw buildings
+        // Draw main detailed buildings
         this.buildings.forEach(building => building.draw(this.ctx));
+        
+        // Enhanced ground with texture
+        this.ctx.fillStyle = '#444444';
+        this.ctx.fillRect(0, this.canvas.height - 50, this.canvas.width, 50);
+        
+        // Sidewalk
+        this.ctx.fillStyle = '#666666';
+        this.ctx.fillRect(0, this.canvas.height - 50, this.canvas.width, 10);
+        
+        // Street markings
+        this.ctx.fillStyle = '#FFFF00';
+        for (let i = 0; i < this.canvas.width; i += 40) {
+            const x = (i - this.distance * 2) % this.canvas.width;
+            this.ctx.fillRect(x, this.canvas.height - 45, 20, 3);
+        }
+        
+        // Street lights
+        for (let i = 0; i < this.canvas.width; i += 150) {
+            const x = (i - this.distance * 1.2) % this.canvas.width;
+            
+            // Light pole
+            this.ctx.fillStyle = '#888888';
+            this.ctx.fillRect(x, this.canvas.height - 120, 4, 70);
+            
+            // Light fixture
+            this.ctx.fillStyle = '#CCCCCC';
+            this.ctx.fillRect(x - 8, this.canvas.height - 125, 20, 8);
+            
+            // Light glow
+            this.ctx.fillStyle = 'rgba(255, 255, 150, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.arc(x + 2, this.canvas.height - 120, 30, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
         
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
@@ -732,6 +1042,10 @@ class Game {
         // Draw player
         console.log('About to draw player...');
         this.player.draw(this.ctx);
+        
+        // Add atmospheric fog effect
+        this.ctx.fillStyle = 'rgba(26, 26, 46, 0.1)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
     
     gameLoop() {
