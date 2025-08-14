@@ -75,34 +75,8 @@ class Game {
             }
         });
 
-        // Create background buildings (far layer)
-        this.backgroundBuildings = [];
-        for (let i = 0; i < 20; i++) {
-            this.backgroundBuildings.push({
-                x: 400 + i * 150,
-                y: this.canvas.height - 200 - Math.random() * 100,
-                width: 120,
-                height: 200 + Math.random() * 100,
-                speed: 0.3,
-                update: function(speed) {
-                    this.x -= speed * this.speed;
-                },
-                draw: function(ctx) {
-                    ctx.fillStyle = '#2A2A2A';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-
-                    // Distant windows
-                    ctx.fillStyle = '#444444';
-                    for (let row = 0; row < 8; row++) {
-                        for (let col = 0; col < 4; col++) {
-                            if (Math.random() > 0.6) {
-                                ctx.fillRect(this.x + 10 + col * 25, this.y + 10 + row * 20, 15, 12);
-                            }
-                        }
-                    }
-                }
-            });
-        }
+        // Create multiple parallax background layers
+        this.backgroundLayers = this.createParallaxLayers();
 
         // Create main detailed buildings (much larger and more detailed)
         for (let i = 0; i < 12; i++) {
@@ -426,6 +400,11 @@ class Game {
         this.bullets = [];
         this.spawnTimer = 0;
 
+        // Visual effects
+        this.particles = [];
+        this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+        this.flashEffect = { active: false, color: '#FFFFFF', alpha: 0, duration: 0, maxDuration: 0 };
+
         // Setup controls
         this.setupControls();
 
@@ -433,10 +412,103 @@ class Game {
         this.injectMobileStyles();
 
         console.log('Starting game loop...');
+        
+        // Set global reference for particle effects
+        window.gameInstance = this;
+        
         this.gameLoop();
 
         // Initialize character selection UI to match saved character
         this.updateCharacterSelectionUI();
+    }
+
+    createParallaxLayers() {
+        const layers = [];
+        
+        // Far mountains layer (slowest)
+        const mountains = [];
+        for (let i = 0; i < 15; i++) {
+            mountains.push({
+                x: i * 200,
+                y: this.canvas.height - 300 - Math.random() * 100,
+                width: 180 + Math.random() * 100,
+                height: 200 + Math.random() * 150,
+                speed: 0.1
+            });
+        }
+        layers.push({
+            name: 'mountains',
+            objects: mountains,
+            draw: (ctx, objects) => {
+                ctx.fillStyle = '#1A1A2E';
+                objects.forEach(mountain => {
+                    ctx.fillRect(mountain.x, mountain.y, mountain.width, mountain.height);
+                    // Mountain peaks
+                    ctx.fillStyle = '#0F0F23';
+                    ctx.fillRect(mountain.x + mountain.width/3, mountain.y - 20, mountain.width/3, 20);
+                    ctx.fillStyle = '#1A1A2E';
+                });
+            }
+        });
+
+        // Distant city layer (medium slow)
+        const distantBuildings = [];
+        for (let i = 0; i < 20; i++) {
+            distantBuildings.push({
+                x: 400 + i * 150,
+                y: this.canvas.height - 200 - Math.random() * 100,
+                width: 120,
+                height: 200 + Math.random() * 100,
+                speed: 0.3
+            });
+        }
+        layers.push({
+            name: 'distantBuildings',
+            objects: distantBuildings,
+            draw: (ctx, objects) => {
+                objects.forEach(building => {
+                    ctx.fillStyle = '#2A2A2A';
+                    ctx.fillRect(building.x, building.y, building.width, building.height);
+
+                    // Distant windows
+                    ctx.fillStyle = '#444444';
+                    for (let row = 0; row < 8; row++) {
+                        for (let col = 0; col < 4; col++) {
+                            if (Math.random() > 0.6) {
+                                ctx.fillRect(building.x + 10 + col * 25, building.y + 10 + row * 20, 15, 12);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Clouds layer (very slow)
+        const clouds = [];
+        for (let i = 0; i < 8; i++) {
+            clouds.push({
+                x: i * 300 + Math.random() * 200,
+                y: 50 + Math.random() * 150,
+                width: 80 + Math.random() * 40,
+                height: 30 + Math.random() * 20,
+                speed: 0.05
+            });
+        }
+        layers.push({
+            name: 'clouds',
+            objects: clouds,
+            draw: (ctx, objects) => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                objects.forEach(cloud => {
+                    // Draw fluffy cloud shape
+                    ctx.fillRect(cloud.x, cloud.y, cloud.width, cloud.height);
+                    ctx.fillRect(cloud.x - 10, cloud.y + 5, cloud.width * 0.7, cloud.height * 0.8);
+                    ctx.fillRect(cloud.x + cloud.width * 0.3, cloud.y + 8, cloud.width * 0.6, cloud.height * 0.6);
+                });
+            }
+        });
+
+        return layers;
     }
 
     injectMobileStyles() {
@@ -554,6 +626,11 @@ class Game {
                 if (this.onGround) {
                     this.jumpVelocity = this.jumpPower;
                     this.onGround = false;
+                    
+                    // Create jump particles (access parent game instance)
+                    if (window.gameInstance) {
+                        window.gameInstance.createJumpParticles(this.x + this.width/2, this.y + this.height);
+                    }
                 }
             },
 
@@ -1483,7 +1560,14 @@ class Game {
             },
 
             draw: function(ctx) {
-                // Main bullet body
+                // Enhanced bullet with glow effect
+                ctx.save();
+                
+                // Outer glow
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+                
+                // Main bullet body with gradient
                 ctx.fillStyle = '#FFFF00';
                 ctx.fillRect(this.x, this.y, this.width, this.height);
 
@@ -1491,13 +1575,23 @@ class Game {
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(this.x + 2, this.y + 1, this.width - 4, this.height - 2);
 
-                // Add bullet trail
-                ctx.fillStyle = '#FFA500';
+                // Enhanced bullet trail with transparency
+                ctx.fillStyle = 'rgba(255, 165, 0, 0.8)';
                 ctx.fillRect(this.x - 8, this.y + 2, 8, 2);
-                ctx.fillStyle = '#FF4500';
+                ctx.fillStyle = 'rgba(255, 69, 0, 0.6)';
                 ctx.fillRect(this.x - 12, this.y + 2, 4, 2);
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                ctx.fillRect(this.x - 16, this.y + 2, 4, 2);
+                
+                ctx.restore();
             }
         };
+
+        // Create muzzle flash effect
+        this.createMuzzleFlash(this.player.x + this.player.width, this.player.y + this.player.height / 2);
+        
+        // Add slight screen shake for shooting
+        this.addScreenShake(1, 50);
 
         this.bullets.push(bullet);
     }
@@ -1668,6 +1762,15 @@ class Game {
                 this.player.y < enemy.y + enemy.height &&
                 this.player.y + this.player.height > enemy.y) {
 
+                // Create death explosion
+                this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2);
+                
+                // Strong screen shake for death
+                this.addScreenShake(8, 500);
+                
+                // Red flash effect for death
+                this.addFlashEffect('#FF0000', 0.5, 300);
+
                 // Collision detected - game over
                 this.gameOver();
             }
@@ -1678,6 +1781,113 @@ class Game {
         this.gameRunning = false;
         document.getElementById('finalScore').textContent = Math.floor(this.distance);
         document.getElementById('gameOver').style.display = 'block';
+    }
+
+    // Particle Effects System
+    createParticle(x, y, vx, vy, color, size, life, gravity = 0) {
+        return {
+            x: x,
+            y: y,
+            vx: vx,
+            vy: vy,
+            color: color,
+            size: size,
+            maxLife: life,
+            life: life,
+            gravity: gravity,
+            
+            update: function() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.life--;
+                
+                // Fade out over time
+                this.alpha = this.life / this.maxLife;
+            },
+            
+            draw: function(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        };
+    }
+
+    createExplosion(x, y) {
+        // Create multiple explosion particles
+        for (let i = 0; i < 15; i++) {
+            const angle = (Math.PI * 2 * i) / 15;
+            const speed = 2 + Math.random() * 4;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            const colors = ['#FF4500', '#FF6347', '#FFD700', '#FFA500', '#FF0000'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            this.particles.push(this.createParticle(x, y, vx, vy, color, 3 + Math.random() * 3, 30 + Math.random() * 20));
+        }
+        
+        // Add some sparks
+        for (let i = 0; i < 8; i++) {
+            const vx = (Math.random() - 0.5) * 8;
+            const vy = (Math.random() - 0.5) * 8;
+            this.particles.push(this.createParticle(x, y, vx, vy, '#FFFFFF', 1, 15 + Math.random() * 10));
+        }
+    }
+
+    createJumpParticles(x, y) {
+        // Dust particles when jumping
+        for (let i = 0; i < 5; i++) {
+            const vx = (Math.random() - 0.5) * 4;
+            const vy = Math.random() * -2;
+            this.particles.push(this.createParticle(x + Math.random() * 40, y, vx, vy, '#8B4513', 2 + Math.random() * 2, 20 + Math.random() * 10, 0.1));
+        }
+    }
+
+    createMuzzleFlash(x, y) {
+        // Muzzle flash when shooting
+        for (let i = 0; i < 3; i++) {
+            const vx = 2 + Math.random() * 3;
+            const vy = (Math.random() - 0.5) * 2;
+            this.particles.push(this.createParticle(x, y, vx, vy, '#FFFF00', 3 + Math.random() * 2, 8 + Math.random() * 5));
+        }
+    }
+
+    addScreenShake(intensity, duration) {
+        this.screenShake.intensity = intensity;
+        this.screenShake.duration = duration;
+    }
+
+    updateScreenShake() {
+        if (this.screenShake.duration > 0) {
+            this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity;
+            this.screenShake.y = (Math.random() - 0.5) * this.screenShake.intensity;
+            this.screenShake.duration--;
+        } else {
+            this.screenShake.x = 0;
+            this.screenShake.y = 0;
+        }
+    }
+
+    addFlashEffect(color, alpha, duration) {
+        this.flashEffect.active = true;
+        this.flashEffect.color = color;
+        this.flashEffect.alpha = alpha;
+        this.flashEffect.duration = duration;
+        this.flashEffect.maxDuration = duration;
+    }
+
+    updateFlashEffect() {
+        if (this.flashEffect.active) {
+            this.flashEffect.duration--;
+            this.flashEffect.alpha = (this.flashEffect.duration / this.flashEffect.maxDuration) * 0.3;
+            
+            if (this.flashEffect.duration <= 0) {
+                this.flashEffect.active = false;
+            }
+        }
     }
 
     checkBulletCollisions() {
@@ -1692,6 +1902,15 @@ class Game {
                     bullet.x <= enemy.x + enemy.width &&
                     bullet.y + bullet.height >= enemy.y &&
                     bullet.y <= enemy.y + enemy.height) {
+
+                    // Create explosion effect
+                    this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                    
+                    // Screen shake effect
+                    this.addScreenShake(3, 200);
+                    
+                    // Flash effect
+                    this.addFlashEffect('#FFFF00', 0.3, 100);
 
                     // Hit! Remove both bullet and enemy
                     this.bullets.splice(bulletIndex, 1);
@@ -1712,12 +1931,30 @@ class Game {
 
         this.distance += this.gameSpeed * 0.1;
 
-        // Update background buildings
-        this.backgroundBuildings.forEach(building => {
-            building.update(this.gameSpeed);
-            if (building.x < -150) {
-                building.x = this.canvas.width + Math.random() * 300;
-            }
+        // Update visual effects
+        this.updateScreenShake();
+        this.updateFlashEffect();
+
+        // Update particles
+        this.particles.forEach(particle => particle.update());
+        this.particles = this.particles.filter(particle => particle.life > 0);
+
+        // Update parallax background layers
+        this.backgroundLayers.forEach(layer => {
+            layer.objects.forEach(obj => {
+                obj.x -= this.gameSpeed * obj.speed;
+                
+                // Reset position when off screen
+                if (obj.x < -obj.width - 100) {
+                    if (layer.name === 'mountains') {
+                        obj.x = this.canvas.width + Math.random() * 400;
+                    } else if (layer.name === 'distantBuildings') {
+                        obj.x = this.canvas.width + Math.random() * 300;
+                    } else if (layer.name === 'clouds') {
+                        obj.x = this.canvas.width + Math.random() * 500;
+                    }
+                }
+            });
         });
 
         // Update buildings
@@ -1773,6 +2010,10 @@ class Game {
     }
 
     draw() {
+        // Apply screen shake
+        this.ctx.save();
+        this.ctx.translate(this.screenShake.x, this.screenShake.y);
+
         // Clear screen with enhanced night sky gradient
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, '#0f0f23');
@@ -1797,8 +2038,10 @@ class Game {
         this.ctx.arc(this.canvas.width - 100, 80, 25, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Draw background buildings (far layer for depth)
-        this.backgroundBuildings.forEach(building => building.draw(this.ctx));
+        // Draw parallax background layers (back to front)
+        this.backgroundLayers.forEach(layer => {
+            layer.draw(this.ctx, layer.objects);
+        });
 
         // Draw city elements (welcome sign)
         this.cityElements.forEach(element => element.draw(this.ctx));
@@ -1850,9 +2093,24 @@ class Game {
         console.log('About to draw player...');
         this.player.draw(this.ctx);
 
+        // Draw particles
+        this.particles.forEach(particle => particle.draw(this.ctx));
+
         // Add atmospheric fog effect
         this.ctx.fillStyle = 'rgba(26, 26, 46, 0.1)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Restore context (end screen shake)
+        this.ctx.restore();
+
+        // Draw flash effect (after restore so it's not affected by shake)
+        if (this.flashEffect.active) {
+            this.ctx.save();
+            this.ctx.globalAlpha = this.flashEffect.alpha;
+            this.ctx.fillStyle = this.flashEffect.color;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+        }
     }
 
     gameLoop() {
