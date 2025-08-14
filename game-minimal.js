@@ -11,7 +11,7 @@ class Game {
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = this.isMobile ? 3 : 2; // Faster game speed on mobile
+        this.gameSpeed = this.isMobile ? 4 : 2; // Even faster game speed on mobile
         this.gameRunning = true;
         this.lives = 5;
         this.maxLives = 5;
@@ -433,6 +433,11 @@ class Game {
         this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
         this.flashEffect = { active: false, color: '#FFFFFF', alpha: 0, duration: 0, maxDuration: 0 };
 
+        // Audio system
+        this.audioContext = null;
+        this.sounds = {};
+        this.initAudio();
+
         // Setup controls
         this.setupControls();
 
@@ -551,6 +556,78 @@ class Game {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                window.innerWidth <= 768 ||
                ('ontouchstart' in window);
+    }
+
+    initAudio() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('Audio context initialized');
+        } catch (error) {
+            console.warn('Audio not supported:', error);
+            this.audioContext = null;
+        }
+    }
+
+    // Resume audio context if needed (for browser autoplay policies)
+    resumeAudioContext() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    }
+
+    // Generate sound effects using Web Audio API
+    createTone(frequency, duration, type = 'sine', volume = 0.1) {
+        if (!this.audioContext) return;
+
+        // Resume audio context if suspended
+        this.resumeAudioContext();
+
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration);
+        } catch (error) {
+            console.warn('Error playing sound:', error);
+        }
+    }
+
+    playJumpSound() {
+        // Higher pitch jump sound
+        this.createTone(400, 0.2, 'square', 0.15);
+    }
+
+    playShootSound() {
+        // Shooting sound effect
+        this.createTone(800, 0.1, 'sawtooth', 0.1);
+    }
+
+    playHitSound() {
+        // Enemy hit sound
+        this.createTone(300, 0.3, 'square', 0.2);
+        setTimeout(() => this.createTone(200, 0.2, 'triangle', 0.15), 100);
+    }
+
+    playDamageSound() {
+        // Player damage sound
+        this.createTone(150, 0.5, 'sawtooth', 0.25);
+    }
+
+    playGameOverSound() {
+        // Game over sound sequence
+        this.createTone(200, 0.3, 'triangle', 0.2);
+        setTimeout(() => this.createTone(150, 0.4, 'sine', 0.2), 300);
+        setTimeout(() => this.createTone(100, 0.6, 'triangle', 0.2), 600);
     }
 
     injectMobileStyles() {
@@ -686,9 +763,10 @@ class Game {
                     this.jumpVelocity = this.jumpPower;
                     this.onGround = false;
                     
-                    // Create jump particles (access parent game instance)
+                    // Create jump particles and play sound (access parent game instance)
                     if (window.gameInstance) {
                         window.gameInstance.createJumpParticles(this.x + this.width/2, this.y + this.height);
+                        window.gameInstance.playJumpSound();
                     }
                 }
             },
@@ -1596,10 +1674,10 @@ class Game {
         document.body.appendChild(video);
         document.body.appendChild(overlay);
 
-        // Auto-hide after 5 seconds (increased for testing)
+        // Auto-hide after 7 seconds (extended duration)
         setTimeout(() => {
             this.hideVideo();
-        }, 5000);
+        }, 7000);
     }
 
     showCharacterMessage(character) {
@@ -1711,6 +1789,9 @@ class Game {
         
         // Add slight screen shake for shooting
         this.addScreenShake(1, 50);
+
+        // Play shooting sound
+        this.playShootSound();
 
         this.bullets.push(bullet);
     }
@@ -1904,6 +1985,9 @@ class Game {
         this.addScreenShake(5, 300);
         this.addFlashEffect('#FF0000', 0.4, 200);
         
+        // Play damage sound
+        this.playDamageSound();
+        
         // Check if game over
         if (this.lives <= 0) {
             this.gameOver();
@@ -1923,6 +2007,9 @@ class Game {
         this.gameRunning = false;
         document.getElementById('finalScore').textContent = Math.floor(this.distance);
         document.getElementById('gameOver').style.display = 'block';
+        
+        // Play game over sound
+        this.playGameOverSound();
     }
 
     // Particle Effects System
@@ -2071,6 +2158,9 @@ class Game {
                     
                     // Flash effect
                     this.addFlashEffect('#FFFF00', 0.3, 100);
+
+                    // Play enemy hit sound
+                    this.playHitSound();
 
                     // Hit! Remove both bullet and enemy
                     this.bullets.splice(bulletIndex, 1);
