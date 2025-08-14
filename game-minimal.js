@@ -20,26 +20,157 @@ class Game {
         // Create character with jumping
         this.player = this.createPlayer();
         
-        // Simple buildings
+        // City elements including welcome sign
         this.buildings = [];
-        for (let i = 0; i < 10; i++) {
-            this.buildings.push({
-                x: i * 100,
-                y: this.canvas.height - 200 - Math.random() * 200,
-                width: 80,
-                height: 200 + Math.random() * 200,
-                update: function(speed) {
-                    this.x -= speed;
-                },
-                draw: function(ctx) {
-                    ctx.fillStyle = '#666';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                }
-            });
+        this.cityElements = [];
+        
+        // Add Welcome to Medellin sign at the beginning
+        this.cityElements.push({
+            x: 200,
+            y: this.canvas.height - 250,
+            width: 160,
+            height: 100,
+            type: 'welcome_sign',
+            update: function(speed) {
+                this.x -= speed;
+            },
+            draw: function(ctx) {
+                // Sign post
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x + 75, this.y + 70, 10, 80);
+                
+                // Sign board
+                ctx.fillStyle = '#2F4F2F';
+                ctx.fillRect(this.x, this.y, this.width, 70);
+                
+                // Colombian flag
+                ctx.fillStyle = '#FFFF00'; // Yellow
+                ctx.fillRect(this.x + 10, this.y + 5, 140, 20);
+                ctx.fillStyle = '#0033A0'; // Blue
+                ctx.fillRect(this.x + 10, this.y + 25, 140, 20);
+                ctx.fillStyle = '#CE1126'; // Red
+                ctx.fillRect(this.x + 10, this.y + 45, 140, 20);
+                
+                // Text
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '12px Arial';
+                ctx.fillText('WELCOME TO', this.x + 50, this.y + 17);
+                ctx.fillText('MEDELLIN', this.x + 55, this.y + 37);
+                ctx.fillText('COLOMBIA', this.x + 55, this.y + 57);
+            }
+        });
+        
+        // Create buildings with more variety
+        for (let i = 0; i < 15; i++) {
+            const buildingType = Math.random();
+            let building;
+            
+            if (buildingType < 0.3) {
+                // Apartment building
+                building = {
+                    x: 400 + i * 120,
+                    y: this.canvas.height - 250 - Math.random() * 150,
+                    width: 100,
+                    height: 250 + Math.random() * 150,
+                    type: 'apartment',
+                    update: function(speed) {
+                        this.x -= speed;
+                    },
+                    draw: function(ctx) {
+                        // Building body
+                        ctx.fillStyle = '#4A4A4A';
+                        ctx.fillRect(this.x, this.y, this.width, this.height);
+                        
+                        // Windows (3x3 grid)
+                        ctx.fillStyle = '#FFFF88';
+                        for (let row = 0; row < 6; row++) {
+                            for (let col = 0; col < 3; col++) {
+                                if (Math.random() > 0.3) { // 70% chance window is lit
+                                    ctx.fillRect(
+                                        this.x + 15 + col * 25, 
+                                        this.y + 20 + row * 30, 
+                                        15, 20
+                                    );
+                                }
+                            }
+                        }
+                        
+                        // Rooftop
+                        ctx.fillStyle = '#654321';
+                        ctx.fillRect(this.x, this.y, this.width, 15);
+                    }
+                };
+            } else if (buildingType < 0.6) {
+                // Office building
+                building = {
+                    x: 400 + i * 120,
+                    y: this.canvas.height - 300 - Math.random() * 200,
+                    width: 90,
+                    height: 300 + Math.random() * 200,
+                    type: 'office',
+                    update: function(speed) {
+                        this.x -= speed;
+                    },
+                    draw: function(ctx) {
+                        // Building body
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(this.x, this.y, this.width, this.height);
+                        
+                        // Glass windows
+                        ctx.fillStyle = '#87CEEB';
+                        for (let row = 0; row < 8; row++) {
+                            for (let col = 0; col < 2; col++) {
+                                ctx.fillRect(
+                                    this.x + 20 + col * 35, 
+                                    this.y + 15 + row * 25, 
+                                    25, 20
+                                );
+                            }
+                        }
+                        
+                        // Building outline
+                        ctx.strokeStyle = '#222222';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(this.x, this.y, this.width, this.height);
+                    }
+                };
+            } else {
+                // Small shop/house
+                building = {
+                    x: 400 + i * 120,
+                    y: this.canvas.height - 150 - Math.random() * 100,
+                    width: 70,
+                    height: 150 + Math.random() * 100,
+                    type: 'shop',
+                    update: function(speed) {
+                        this.x -= speed;
+                    },
+                    draw: function(ctx) {
+                        // Building body
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x, this.y, this.width, this.height);
+                        
+                        // Door
+                        ctx.fillStyle = '#654321';
+                        ctx.fillRect(this.x + 25, this.y + this.height - 40, 20, 40);
+                        
+                        // Window
+                        ctx.fillStyle = '#FFFF88';
+                        ctx.fillRect(this.x + 10, this.y + 20, 15, 15);
+                        
+                        // Roof
+                        ctx.fillStyle = '#CC0000';
+                        ctx.fillRect(this.x - 5, this.y, this.width + 10, 15);
+                    }
+                };
+            }
+            
+            this.buildings.push(building);
         }
         
-        // Add enemies
+        // Add enemies and bullets
         this.enemies = [];
+        this.bullets = [];
         this.spawnTimer = 0;
         
         // Setup controls
@@ -275,6 +406,9 @@ class Game {
             if (e.code === 'Space' || e.key === ' ') {
                 e.preventDefault();
                 this.player.jump();
+            } else if (e.key === 'x' || e.key === 'X') {
+                e.preventDefault();
+                this.shoot();
             }
         });
         
@@ -305,6 +439,20 @@ class Game {
                 this.selectCharacter(btn.dataset.character);
             });
         });
+        
+        // Attack button
+        const attackBtn = document.getElementById('attackBtn');
+        if (attackBtn) {
+            attackBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.shoot();
+            });
+            
+            attackBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.shoot();
+            });
+        }
     }
     
     selectCharacter(character) {
@@ -377,6 +525,31 @@ class Game {
         }
     }
     
+    shoot() {
+        const bullet = {
+            x: this.player.x + this.player.width,
+            y: this.player.y + this.player.height / 2,
+            width: 8,
+            height: 3,
+            speed: 8,
+            
+            update: function() {
+                this.x += this.speed;
+            },
+            
+            draw: function(ctx) {
+                ctx.fillStyle = '#FFFF00';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Add bullet trail
+                ctx.fillStyle = '#FFA500';
+                ctx.fillRect(this.x - 5, this.y + 1, 5, 1);
+            }
+        };
+        
+        this.bullets.push(bullet);
+    }
+    
     spawnEnemy() {
         const enemy = {
             x: this.canvas.width + 50,
@@ -429,6 +602,25 @@ class Game {
         document.getElementById('gameOver').style.display = 'block';
     }
     
+    checkBulletCollisions() {
+        this.bullets.forEach((bullet, bulletIndex) => {
+            this.enemies.forEach((enemy, enemyIndex) => {
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    
+                    // Hit! Remove both bullet and enemy
+                    this.bullets.splice(bulletIndex, 1);
+                    this.enemies.splice(enemyIndex, 1);
+                    
+                    // Add points for killing enemy
+                    this.distance += 5;
+                }
+            });
+        });
+    }
+    
     update() {
         console.log('Game updating, distance:', this.distance);
         
@@ -441,10 +633,23 @@ class Game {
         
         // Reset buildings that go off screen
         this.buildings.forEach(building => {
-            if (building.x < -100) {
+            if (building.x < -200) {
                 building.x = this.canvas.width + Math.random() * 200;
             }
         });
+        
+        // Update city elements (welcome sign)
+        this.cityElements.forEach(element => {
+            element.update(this.gameSpeed);
+        });
+        
+        // Update bullets
+        this.bullets.forEach(bullet => {
+            bullet.update();
+        });
+        
+        // Remove off-screen bullets
+        this.bullets = this.bullets.filter(bullet => bullet.x < this.canvas.width + 50);
         
         this.player.update();
         
@@ -465,6 +670,7 @@ class Game {
         
         // Check collisions
         this.checkCollisions();
+        this.checkBulletCollisions();
         
         // Update UI
         document.getElementById('score').textContent = `Distance: ${Math.floor(this.distance)}m`;
@@ -481,11 +687,17 @@ class Game {
         this.ctx.fillStyle = '#666';
         this.ctx.fillRect(0, this.canvas.height - 50, this.canvas.width, 50);
         
+        // Draw city elements (welcome sign)
+        this.cityElements.forEach(element => element.draw(this.ctx));
+        
         // Draw buildings
         this.buildings.forEach(building => building.draw(this.ctx));
         
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
+        
+        // Draw bullets
+        this.bullets.forEach(bullet => bullet.draw(this.ctx));
         
         // Draw player
         console.log('About to draw player...');
