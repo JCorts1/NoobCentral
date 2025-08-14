@@ -13,6 +13,10 @@ class Game {
         this.distance = 0;
         this.gameSpeed = 2;
         this.gameRunning = true;
+        this.lives = 5;
+        this.maxLives = 5;
+        this.invulnerable = false;
+        this.invulnerabilityTimer = 0;
 
         // Load saved character or default to Juan
         this.selectedCharacter = this.loadSavedCharacter() || 'juan';
@@ -420,6 +424,9 @@ class Game {
 
         // Initialize character selection UI to match saved character
         this.updateCharacterSelectionUI();
+        
+        // Initialize hearts display
+        this.updateHeartsDisplay();
     }
 
     createParallaxLayers() {
@@ -581,6 +588,24 @@ class Game {
         document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(this.selectedCharacter)}`;
     }
 
+    updateHeartsDisplay() {
+        const heartsContainer = document.getElementById('hearts');
+        heartsContainer.innerHTML = '';
+        
+        for (let i = 0; i < this.maxLives; i++) {
+            const heart = document.createElement('span');
+            heart.className = 'heart';
+            heart.textContent = '❤️';
+            
+            if (i >= this.lives) {
+                heart.classList.add('lost');
+                heart.textContent = '🤍';
+            }
+            
+            heartsContainer.appendChild(heart);
+        }
+    }
+
     generateWindowLights(cols, rows) {
         const lights = [];
         for (let row = 0; row < rows; row++) {
@@ -643,6 +668,15 @@ class Game {
                 const hairSway = Math.sin(this.animFrame * 0.08) * 1;
                 const isJumping = !this.onGround;
 
+                // Handle invulnerability flashing
+                if (window.gameInstance && window.gameInstance.invulnerable) {
+                    const flashRate = Math.floor(this.animFrame / 5) % 2;
+                    if (flashRate === 0) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.5;
+                    }
+                }
+
                 // Draw character shadow first
                 this.drawShadow(ctx);
 
@@ -654,6 +688,14 @@ class Game {
                     this.drawJulian(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
                 } else if (this.character === 'jay') {
                     this.drawJay(ctx, legOffset, armOffset, breatheOffset, blinkFrame, hairSway, isJumping);
+                }
+
+                // Restore context if we were flashing
+                if (window.gameInstance && window.gameInstance.invulnerable) {
+                    const flashRate = Math.floor(this.animFrame / 5) % 2;
+                    if (flashRate === 0) {
+                        ctx.restore();
+                    }
                 }
             },
 
@@ -1756,25 +1798,48 @@ class Game {
     }
 
     checkCollisions() {
+        if (this.invulnerable) return; // Skip collision check if invulnerable
+        
         this.enemies.forEach(enemy => {
             if (this.player.x < enemy.x + enemy.width &&
                 this.player.x + this.player.width > enemy.x &&
                 this.player.y < enemy.y + enemy.height &&
                 this.player.y + this.player.height > enemy.y) {
 
-                // Create death explosion
-                this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2);
-                
-                // Strong screen shake for death
-                this.addScreenShake(8, 500);
-                
-                // Red flash effect for death
-                this.addFlashEffect('#FF0000', 0.5, 300);
-
-                // Collision detected - game over
-                this.gameOver();
+                // Take damage instead of instant death
+                this.takeDamage();
             }
         });
+    }
+
+    takeDamage() {
+        if (this.invulnerable) return;
+        
+        this.lives--;
+        this.invulnerable = true;
+        this.invulnerabilityTimer = 120; // 2 seconds at 60fps
+        
+        // Update hearts display
+        this.updateHeartsDisplay();
+        
+        // Create damage effect
+        this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2);
+        this.addScreenShake(5, 300);
+        this.addFlashEffect('#FF0000', 0.4, 200);
+        
+        // Check if game over
+        if (this.lives <= 0) {
+            this.gameOver();
+        }
+    }
+
+    updateInvulnerability() {
+        if (this.invulnerable) {
+            this.invulnerabilityTimer--;
+            if (this.invulnerabilityTimer <= 0) {
+                this.invulnerable = false;
+            }
+        }
     }
 
     gameOver() {
@@ -1934,6 +1999,7 @@ class Game {
         // Update visual effects
         this.updateScreenShake();
         this.updateFlashEffect();
+        this.updateInvulnerability();
 
         // Update particles
         this.particles.forEach(particle => particle.update());
