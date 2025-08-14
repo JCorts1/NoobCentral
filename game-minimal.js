@@ -11,7 +11,7 @@ class Game {
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = this.isMobile ? 12 : 2; // 2x faster mobile speed (6 * 2 = 12)
+        this.gameSpeed = this.isMobile ? 24 : 4; // 2x faster overall (12 * 2 = 24, 2 * 2 = 4)
         this.gameRunning = true;
         this.lives = 5;
         this.maxLives = 5;
@@ -19,14 +19,30 @@ class Game {
         this.invulnerabilityTimer = 0;
         this.energy = 0; // Start with 0% energy
         this.maxEnergy = 100;
+        
+        // Special power system
+        this.specialPowerActive = false;
+        this.specialPowerTimer = 0;
+        this.specialPowerDuration = 600; // 10 seconds at 60fps
+        this.canUseSpecialPower = false;
 
         // Mobile performance settings
         this.isMobile = this.detectMobile();
         this.performanceMode = this.isMobile ? 'low' : 'high';
         this.frameCount = 0;
         this.lastFrameTime = performance.now();
-        this.targetFPS = this.isMobile ? 60 : 60; // Same high FPS on mobile
+        this.targetFPS = 30; // Lower target FPS for better performance
         this.skipFrames = 0;
+        
+        // Performance optimization variables
+        this.timeCache = 0; // Cache for expensive time calculations
+        this.effectsUpdateCounter = 0; // Counter for effect updates
+        
+        // Emergency performance mode - disable expensive features
+        this.emergencyPerformanceMode = true;
+        this.disableShadows = true;
+        this.disableParticles = false; // Keep some particles
+        this.disableComplexBackground = true;
 
         // Mobile optimizations - wider view for better gameplay
         if (this.isMobile) {
@@ -35,6 +51,10 @@ class Game {
             this.canvas.height = 400;
             this.ctx.imageSmoothingEnabled = false;
             this.mobileOptimizations = true;
+            
+            // Aggressive performance optimizations for mobile
+            this.maxParticles = 20; // Limit particles on mobile
+            this.lightSpacing = 300; // Fewer street lights
         } else {
             this.mobileOptimizations = false;
         }
@@ -693,6 +713,52 @@ class Game {
         this.createTone(523, 0.2, 'sine', 0.2); // C5
         setTimeout(() => this.createTone(659, 0.2, 'sine', 0.2), 150); // E5
         setTimeout(() => this.createTone(784, 0.2, 'sine', 0.2), 300); // G5
+    }
+    
+    playSpecialPowerReadySound() {
+        // Special power ready sound - magical chimes
+        this.createTone(880, 0.3, 'sine', 0.4); // A5
+        setTimeout(() => this.createTone(1108, 0.3, 'sine', 0.4), 200); // C#6
+        setTimeout(() => this.createTone(1318, 0.4, 'sine', 0.4), 400); // E6
+    }
+    
+    playSpecialPowerActivateSound() {
+        // Special power activation sound - epic power-up
+        this.createTone(220, 0.2, 'sawtooth', 0.5);
+        setTimeout(() => this.createTone(440, 0.2, 'sawtooth', 0.5), 100);
+        setTimeout(() => this.createTone(880, 0.3, 'sawtooth', 0.5), 200);
+        setTimeout(() => this.createTone(1760, 0.4, 'sine', 0.5), 300);
+    }
+    
+    activateSpecialPower() {
+        if (!this.canUseSpecialPower || this.specialPowerActive) return;
+        
+        // Activate special power
+        this.specialPowerActive = true;
+        this.specialPowerTimer = this.specialPowerDuration;
+        this.canUseSpecialPower = false;
+        this.energy = 0; // Reset energy after use
+        
+        // Play activation sound
+        this.playSpecialPowerActivateSound();
+        
+        // Create epic visual effect
+        this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2, '#FFD700', 50);
+        this.addScreenShake(7, 250);
+        this.addFlashEffect('#FFFFFF', 0.8, 300);
+        
+        console.log('SPECIAL POWER ACTIVATED! Invincible for 10 seconds!');
+    }
+    
+    updateSpecialPower() {
+        if (this.specialPowerActive) {
+            this.specialPowerTimer--;
+            
+            if (this.specialPowerTimer <= 0) {
+                this.specialPowerActive = false;
+                console.log('Special power ended.');
+            }
+        }
     }
 
     injectMobileStyles() {
@@ -1510,6 +1576,9 @@ class Game {
             } else if (e.key === 'x' || e.key === 'X') {
                 e.preventDefault();
                 this.shoot();
+            } else if (e.key === 'z' || e.key === 'Z') {
+                e.preventDefault();
+                this.activateSpecialPower();
             }
         });
 
@@ -1558,6 +1627,20 @@ class Game {
             attackBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 this.shoot();
+            });
+        }
+        
+        // Special power button
+        const specialBtn = document.getElementById('specialBtn');
+        if (specialBtn) {
+            specialBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.activateSpecialPower();
+            });
+
+            specialBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.activateSpecialPower();
             });
         }
     }
@@ -1908,13 +1991,10 @@ class Game {
                     ctx.fillRect(this.x + 12, this.y + 20, 16, 16);
                     ctx.fillRect(this.x + 42, this.y + 20, 16, 16);
                     
-                    // Eye glow effect
-                    ctx.shadowColor = '#FF0000';
-                    ctx.shadowBlur = 8;
+                    // Simple eyes only - no shadows for performance
                     ctx.fillStyle = '#FFFF00';
                     ctx.fillRect(this.x + 16, this.y + 24, 8, 8);
                     ctx.fillRect(this.x + 46, this.y + 24, 8, 8);
-                    ctx.shadowBlur = 0;
                     
                     // Menacing mouth with drool
                     ctx.fillStyle = '#000000';
@@ -2103,13 +2183,7 @@ class Game {
                 ctx.closePath();
                 ctx.fill();
                 
-                // Glow effect
-                ctx.shadowColor = '#FFD700';
-                ctx.shadowBlur = 10;
-                ctx.strokeStyle = '#FFF';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
+                // No glow effects for performance
             }
         };
         
@@ -2171,13 +2245,7 @@ class Game {
                 ctx.fillRect(centerX - 1, centerY + 2, 1, 2);
                 ctx.fillRect(centerX + 2, centerY, 1, 2);
                 
-                // Subtle glow effect
-                ctx.shadowColor = '#32CD32';
-                ctx.shadowBlur = 3;
-                ctx.strokeStyle = '#90EE90';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
+                // No glow effects for performance
             }
         };
         
@@ -2195,6 +2263,13 @@ class Game {
                 
                 // Give 100% energy
                 this.energy = 100;
+                
+                // Enable special power
+                if (!this.canUseSpecialPower) {
+                    this.canUseSpecialPower = true;
+                    this.playSpecialPowerReadySound();
+                    console.log('Special power ready! Press Z or SPECIAL button!');
+                }
                 
                 // Create particles effect
                 this.createExplosion(powerUp.x + powerUp.width/2, powerUp.y + powerUp.height/2, '#FFD700');
@@ -2251,7 +2326,7 @@ class Game {
     }
 
     takeDamage() {
-        if (this.invulnerable) return;
+        if (this.invulnerable || this.specialPowerActive) return; // No damage during special power
         
         this.lives--;
         this.invulnerable = true;
@@ -2262,7 +2337,7 @@ class Game {
         
         // Create damage effect
         this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2);
-        this.addScreenShake(5, 300);
+        this.addScreenShake(2, 150);
         this.addFlashEffect('#FF0000', 0.4, 200);
         
         // Play damage sound
@@ -2330,9 +2405,11 @@ class Game {
     }
 
     createExplosion(x, y) {
-        // Smart particle reduction for mobile performance
-        const particleCount = this.mobileOptimizations ? 6 : 15;
-        const sparkCount = this.mobileOptimizations ? 3 : 8;
+        // Emergency performance mode - minimal particles
+        if (this.disableParticles) return;
+        
+        const particleCount = 3; // Very few particles
+        const sparkCount = 2;
         
         // Create multiple explosion particles
         for (let i = 0; i < particleCount; i++) {
@@ -2379,12 +2456,12 @@ class Game {
     }
 
     addScreenShake(intensity, duration) {
-        // Reduce screen shake intensity on mobile
-        const mobileIntensity = this.mobileOptimizations ? intensity * 0.5 : intensity;
-        const mobileDuration = this.mobileOptimizations ? duration * 0.7 : duration;
+        // Reduce screen shake by 50% for better performance
+        const reducedIntensity = intensity * 0.5;
+        const reducedDuration = duration * 0.5;
         
-        this.screenShake.intensity = mobileIntensity;
-        this.screenShake.duration = mobileDuration;
+        this.screenShake.intensity = reducedIntensity;
+        this.screenShake.duration = reducedDuration;
     }
 
     updateScreenShake() {
@@ -2437,8 +2514,8 @@ class Game {
                     // Create explosion effect
                     this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
                     
-                    // Screen shake effect
-                    this.addScreenShake(3, 200);
+                    // Minimal screen shake for enemy death
+                    this.addScreenShake(1, 100);
                     
                     // Flash effect
                     this.addFlashEffect('#FFFF00', 0.3, 100);
@@ -2454,6 +2531,13 @@ class Game {
                     this.distance += 10;
                     // Increase energy when killing enemies
                     this.energy = Math.min(this.maxEnergy, this.energy + 10);
+                    
+                    // Check if player reached 100% energy for special power
+                    if (this.energy >= 100 && !this.canUseSpecialPower) {
+                        this.canUseSpecialPower = true;
+                        this.playSpecialPowerReadySound();
+                        console.log('Special power ready! Press SPECIAL button!');
+                    }
 
                     console.log('Enemy hit! Bullet collision detected');
                     break; // Exit enemy loop since bullet is destroyed
@@ -2463,7 +2547,7 @@ class Game {
     }
 
     update() {
-        console.log('Game updating, distance:', this.distance);
+        // Removed expensive console.log for performance
 
         // Emergency check for deployment issue - check elements exist before using them
         const scoreCheck = document.getElementById('score');
@@ -2483,29 +2567,40 @@ class Game {
         this.updateScreenShake();
         this.updateFlashEffect();
         this.updateInvulnerability();
+        this.updateSpecialPower();
 
-        // Update particles
-        this.particles.forEach(particle => particle.update());
-        this.particles = this.particles.filter(particle => particle.life > 0);
+        // Update particles (emergency performance mode)
+        if (!this.disableParticles) {
+            const maxParticles = 10; // Very low limit
+            if (this.particles.length > maxParticles) {
+                this.particles = this.particles.slice(-5);
+            }
+            // Update every other frame only
+            if (this.frameCount % 2 === 0) {
+                this.particles.forEach(particle => particle.update());
+                this.particles = this.particles.filter(particle => particle.life > 0);
+            }
+        } else {
+            this.particles = []; // Clear all particles
+        }
 
-        // Update parallax background layers (skip some frames on mobile)
-        if (!this.mobileOptimizations || this.frameCount % 2 === 0) {
-            this.backgroundLayers.forEach(layer => {
-                layer.objects.forEach(obj => {
-                    obj.x -= this.gameSpeed * obj.speed;
-                    
-                    // Reset position when off screen
-                    if (obj.x < -obj.width - 100) {
-                        if (layer.name === 'mountains') {
-                            obj.x = this.canvas.width + Math.random() * 400;
-                        } else if (layer.name === 'distantBuildings') {
-                            obj.x = this.canvas.width + Math.random() * 300;
-                        } else if (layer.name === 'clouds') {
-                            obj.x = this.canvas.width + Math.random() * 500;
+        // Background layers - emergency performance mode
+        if (!this.disableComplexBackground) {
+            this.effectsUpdateCounter++;
+            // Update background much less frequently
+            if (this.effectsUpdateCounter % 8 === 0) {
+                this.backgroundLayers.forEach(layer => {
+                    // Only update 1 object per layer per frame
+                    if (layer.objects.length > 0) {
+                        const obj = layer.objects[this.frameCount % layer.objects.length];
+                        obj.x -= this.gameSpeed * obj.speed;
+                        
+                        if (obj.x < -obj.width - 100) {
+                            obj.x = this.canvas.width + 300;
                         }
                     }
                 });
-            });
+            }
         }
 
         // Update buildings
@@ -2595,7 +2690,13 @@ class Game {
             }
             
             if (energyEl) {
-                energyEl.textContent = `Energy: ${Math.floor(this.energy)}%`;
+                let energyText = `Energy: ${Math.floor(this.energy)}%`;
+                if (this.specialPowerActive) {
+                    energyText += ' [INVINCIBLE!]';
+                } else if (this.canUseSpecialPower) {
+                    energyText += ' [SPECIAL READY!]';
+                }
+                energyEl.textContent = energyText;
             }
         } catch (error) {
             console.error('Error updating UI:', error);
@@ -2632,10 +2733,13 @@ class Game {
         this.ctx.arc(this.canvas.width - 100, 80, 25, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Draw parallax background layers (keep for visual quality)
-        this.backgroundLayers.forEach(layer => {
-            layer.draw(this.ctx, layer.objects);
-        });
+        // Draw parallax background layers (simplified)
+        if (!this.disableComplexBackground && this.frameCount % 4 === 0) {
+            // Only draw background every 4th frame
+            this.backgroundLayers.forEach(layer => {
+                layer.draw(this.ctx, layer.objects);
+            });
+        }
 
         // Draw city elements (welcome sign)
         this.cityElements.forEach(element => element.draw(this.ctx));
@@ -2658,25 +2762,17 @@ class Game {
             this.ctx.fillRect(x, this.canvas.height - 45, 20, 3);
         }
 
-        // Street lights (simplify on mobile)
-        const lightSpacing = this.performanceMode === 'low' ? 200 : 150;
-        for (let i = 0; i < this.canvas.width; i += lightSpacing) {
-            const x = (i - this.distance * 1.2) % this.canvas.width;
+        // Street lights (emergency performance mode)
+        if (this.frameCount % 8 === 0) { // Only draw every 8th frame
+            const lightSpacing = 400; // Much fewer lights
+            for (let i = 0; i < this.canvas.width; i += lightSpacing) {
+                const x = (i - this.distance * 1.2) % this.canvas.width;
 
-            // Light pole
-            this.ctx.fillStyle = '#888888';
-            this.ctx.fillRect(x, this.canvas.height - 120, 4, 70);
-
-            // Light fixture
-            this.ctx.fillStyle = '#CCCCCC';
-            this.ctx.fillRect(x - 8, this.canvas.height - 125, 20, 8);
-
-            // Light glow (skip on mobile for performance)
-            if (this.performanceMode !== 'low') {
-                this.ctx.fillStyle = 'rgba(255, 255, 150, 0.3)';
-                this.ctx.beginPath();
-                this.ctx.arc(x + 2, this.canvas.height - 120, 30, 0, Math.PI * 2);
-                this.ctx.fill();
+                // Simple light pole only
+                this.ctx.fillStyle = '#888888';
+                this.ctx.fillRect(x, this.canvas.height - 120, 4, 70);
+                this.ctx.fillStyle = '#CCCCCC';
+                this.ctx.fillRect(x - 8, this.canvas.height - 125, 20, 8);
             }
         }
 
@@ -2693,11 +2789,27 @@ class Game {
         this.bullets.forEach(bullet => bullet.draw(this.ctx));
 
         // Draw player
-        console.log('About to draw player...');
+        // Player drawing (console.log removed for performance)
+        
+        // Special power effect (simplified for performance)
+        if (this.specialPowerActive) {
+            this.ctx.save();
+            // Simple color overlay instead of glow
+            this.ctx.globalAlpha = 0.7;
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            this.ctx.fillRect(this.player.x - 5, this.player.y - 5, this.player.width + 10, this.player.height + 10);
+        }
+        
         this.player.draw(this.ctx);
+        
+        if (this.specialPowerActive) {
+            this.ctx.restore();
+        }
 
-        // Draw particles
-        this.particles.forEach(particle => particle.draw(this.ctx));
+        // Draw particles (emergency performance mode)
+        if (!this.disableParticles && this.frameCount % 2 === 0) {
+            this.particles.forEach(particle => particle.draw(this.ctx));
+        }
 
         // Add atmospheric fog effect
         this.ctx.fillStyle = 'rgba(26, 26, 46, 0.1)';
