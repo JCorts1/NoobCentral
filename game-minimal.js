@@ -1893,44 +1893,63 @@ class Game {
                 },
 
                 draw: function(ctx) {
-                    // Draw larger monster
+                    // Improved larger monster with better design
+                    // Main body (darker, more menacing)
+                    ctx.fillStyle = '#4B0000';
+                    ctx.fillRect(this.x + 5, this.y + 10, this.width - 10, this.height - 10);
+                    
+                    // Muscle definition
                     ctx.fillStyle = '#8B0000';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-
-                    // Monster eyes (much larger)
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(this.x + 15, this.y + 15, 12, 12);
-                    ctx.fillRect(this.x + 45, this.y + 15, 12, 12);
-
-                    // Monster pupils
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(this.x + 18, this.y + 18, 6, 6);
-                    ctx.fillRect(this.x + 48, this.y + 18, 6, 6);
-
-                    // Monster mouth
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(this.x + 20, this.y + 45, 40, 12);
-
-                    // Monster teeth (much larger)
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(this.x + 10, this.y + 52, 8, 16);
-                    ctx.fillRect(this.x + 22, this.y + 52, 8, 16);
-                    ctx.fillRect(this.x + 34, this.y + 52, 8, 16);
-                    ctx.fillRect(this.x + 46, this.y + 52, 8, 16);
-                    ctx.fillRect(this.x + 58, this.y + 52, 8, 16);
-
-                    // Monster claws
+                    ctx.fillRect(this.x + 10, this.y + 15, 25, 30);
+                    ctx.fillRect(this.x + 45, this.y + 15, 25, 30);
+                    
+                    // Glowing eyes (much more prominent)
+                    ctx.fillStyle = '#FF4500';
+                    ctx.fillRect(this.x + 12, this.y + 20, 16, 16);
+                    ctx.fillRect(this.x + 42, this.y + 20, 16, 16);
+                    
+                    // Eye glow effect
+                    ctx.shadowColor = '#FF0000';
+                    ctx.shadowBlur = 8;
                     ctx.fillStyle = '#FFFF00';
-                    ctx.fillRect(this.x + 5, this.y + 70, 5, 12);
-                    ctx.fillRect(this.x + 70, this.y + 70, 5, 12);
-
-                    // Spikes on back
-                    ctx.fillStyle = '#654321';
-                    ctx.fillRect(this.x + 15, this.y - 5, 6, 8);
-                    ctx.fillRect(this.x + 25, this.y - 8, 6, 12);
-                    ctx.fillRect(this.x + 35, this.y - 6, 6, 10);
-                    ctx.fillRect(this.x + 45, this.y - 7, 6, 11);
-                    ctx.fillRect(this.x + 55, this.y - 4, 6, 8);
+                    ctx.fillRect(this.x + 16, this.y + 24, 8, 8);
+                    ctx.fillRect(this.x + 46, this.y + 24, 8, 8);
+                    ctx.shadowBlur = 0;
+                    
+                    // Menacing mouth with drool
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + 15, this.y + 50, 50, 15);
+                    
+                    // Sharp fangs
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 18, this.y + 50, 6, 20);
+                    ctx.fillRect(this.x + 28, this.y + 52, 4, 15);
+                    ctx.fillRect(this.x + 36, this.y + 52, 4, 15);
+                    ctx.fillRect(this.x + 46, this.y + 50, 6, 20);
+                    ctx.fillRect(this.x + 56, this.y + 50, 6, 20);
+                    
+                    // Drool
+                    ctx.fillStyle = '#90EE90';
+                    ctx.fillRect(this.x + 25, this.y + 65, 2, 8);
+                    ctx.fillRect(this.x + 50, this.y + 67, 2, 6);
+                    
+                    // Massive claws
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x, this.y + 65, 8, 15);
+                    ctx.fillRect(this.x + 72, this.y + 65, 8, 15);
+                    
+                    // Prominent spikes
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x + 10, this.y - 8, 8, 15);
+                    ctx.fillRect(this.x + 22, this.y - 12, 8, 20);
+                    ctx.fillRect(this.x + 34, this.y - 10, 8, 18);
+                    ctx.fillRect(this.x + 46, this.y - 11, 8, 19);
+                    ctx.fillRect(this.x + 58, this.y - 7, 8, 14);
+                    
+                    // Chest scars
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(this.x + 30, this.y + 25, 20, 2);
+                    ctx.fillRect(this.x + 25, this.y + 35, 30, 2);
                 }
             };
         } else {
@@ -1973,60 +1992,85 @@ class Game {
                 },
 
                 draw: function(ctx) {
-                    // Body (hoodie)
-                    ctx.fillStyle = '#2F2F2F';
+                    // Improved hooded figure with clearer backwards cap
+                    // Body (hoodie) - brighter to stand out
+                    ctx.fillStyle = '#404040';
                     ctx.fillRect(this.x + 10, this.y + 30, 50, 60);
-
-                    // Hood
-                    ctx.fillStyle = '#1A1A1A';
-                    ctx.fillRect(this.x + 5, this.y + 10, 60, 35);
-                    ctx.fillRect(this.x + 8, this.y + 5, 54, 25);
-
-                    // Hood shadow
+                    
+                    // Hoodie details
+                    ctx.fillStyle = '#555555';
+                    ctx.fillRect(this.x + 12, this.y + 32, 46, 8); // Chest stripe
+                    
+                    // Head (more visible)
+                    ctx.fillStyle = '#DDBEA9';
+                    ctx.fillRect(this.x + 22, this.y + 18, 26, 22);
+                    
+                    // BACKWARDS CAP - much more obvious
+                    ctx.fillStyle = '#DC143C'; // Bright red cap
+                    ctx.fillRect(this.x + 18, this.y + 15, 34, 12); // Main cap
+                    
+                    // Cap brim pointing BACKWARDS (key feature)
+                    ctx.fillStyle = '#B22222';
+                    ctx.fillRect(this.x + 12, this.y + 20, 12, 6); // Backwards brim
+                    ctx.fillRect(this.x + 10, this.y + 22, 8, 4); // Extended brim tip
+                    
+                    // Cap logo/design
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 28, this.y + 18, 12, 6);
                     ctx.fillStyle = '#000000';
-                    ctx.fillRect(this.x + 15, this.y + 15, 40, 20);
-
-                    // Head (barely visible under hood)
-                    ctx.fillStyle = '#D2B48C';
-                    ctx.fillRect(this.x + 25, this.y + 20, 20, 20);
-
-                    // Cap backwards (under hood)
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(this.x + 20, this.y + 18, 30, 8);
-                    // Cap brim (backwards)
-                    ctx.fillRect(this.x + 18, this.y + 26, 8, 4);
-
-                    // BLACK sunglasses
+                    ctx.fillRect(this.x + 30, this.y + 20, 8, 2);
+                    
+                    // Cool sunglasses (more prominent)
                     ctx.fillStyle = '#000000';
-                    ctx.fillRect(this.x + 27, this.y + 25, 16, 8);
-                    ctx.fillRect(this.x + 26, this.y + 26, 18, 6);
-                    // Bridge
-                    ctx.fillRect(this.x + 34, this.y + 28, 2, 2);
-
-                    // Arms
-                    ctx.fillStyle = '#2F2F2F';
+                    ctx.fillRect(this.x + 24, this.y + 28, 20, 10);
+                    // Reflective lens effect
+                    ctx.fillStyle = '#4169E1';
+                    ctx.fillRect(this.x + 26, this.y + 30, 6, 6);
+                    ctx.fillRect(this.x + 36, this.y + 30, 6, 6);
+                    
+                    // Hood (less prominent so cap shows better)
+                    ctx.fillStyle = 'rgba(26, 26, 26, 0.7)';
+                    ctx.fillRect(this.x + 8, this.y + 8, 54, 25);
+                    
+                    // Arms with sleeve details
+                    ctx.fillStyle = '#404040';
                     ctx.fillRect(this.x, this.y + 35, 15, 25);
                     ctx.fillRect(this.x + 55, this.y + 35, 15, 25);
-
+                    
+                    // Sleeve cuffs
+                    ctx.fillStyle = '#666666';
+                    ctx.fillRect(this.x, this.y + 55, 15, 5);
+                    ctx.fillRect(this.x + 55, this.y + 55, 15, 5);
+                    
                     // Hands
-                    ctx.fillStyle = '#D2B48C';
+                    ctx.fillStyle = '#DDBEA9';
                     ctx.fillRect(this.x + 2, this.y + 58, 11, 12);
                     ctx.fillRect(this.x + 57, this.y + 58, 11, 12);
-
-                    // Legs
+                    
+                    // Jeans with details
                     ctx.fillStyle = '#000080';
                     ctx.fillRect(this.x + 15, this.y + 85, 15, 25);
                     ctx.fillRect(this.x + 40, this.y + 85, 15, 25);
-
-                    // Sneakers
+                    
+                    // Jean seams
+                    ctx.fillStyle = '#4682B4';
+                    ctx.fillRect(this.x + 17, this.y + 87, 1, 21);
+                    ctx.fillRect(this.x + 42, this.y + 87, 1, 21);
+                    
+                    // Branded sneakers
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(this.x + 12, this.y + 105, 21, 8);
                     ctx.fillRect(this.x + 37, this.y + 105, 21, 8);
-
-                    // Hoodie strings
-                    ctx.fillStyle = '#CCCCCC';
-                    ctx.fillRect(this.x + 30, this.y + 35, 2, 8);
-                    ctx.fillRect(this.x + 38, this.y + 35, 2, 8);
+                    
+                    // Sneaker stripes
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 15, this.y + 107, 3, 1);
+                    ctx.fillRect(this.x + 40, this.y + 107, 3, 1);
+                    
+                    // Hoodie strings (more visible)
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.x + 30, this.y + 35, 2, 10);
+                    ctx.fillRect(this.x + 38, this.y + 35, 2, 10);
                 }
             };
         }
