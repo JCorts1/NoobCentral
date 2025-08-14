@@ -1,4 +1,4 @@
-console.log('Level 2 script loading... VERTICAL RACING MODE');
+console.log('Level 2 script loading... VERTICAL RACING MODE v2.1');
 
 class Level2Game {
     constructor() {
@@ -6,82 +6,77 @@ class Level2Game {
 
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false; // Keep pixel art crisp
 
-        // Basic setup - vertical scrolling racing game
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = 4; // Vertical scroll speed
+        this.gameSpeed = 4;
         this.gameRunning = true;
-        
-        // Load saved progress from level 1
+        this.frameCount = 0; // For animations
+
         this.loadProgress();
-        
-        // Mobile detection
+
         this.isMobile = this.detectMobile();
         if (this.isMobile) {
-            this.gameSpeed = 6; // Faster on mobile
+            this.gameSpeed = 6;
         }
-        
-        // Level 2 specific mechanics - VERTICAL RACING
-        this.gameMode = 'racing'; // Vertical car racing
-        this.fuel = 100;
-        this.maxFuel = 100;
-        this.roadOffset = 0; // For scrolling road effect
-        
-        // Player car - positioned at bottom center
+
+        this.gameMode = 'racing';
+        this.roadOffset = 0;
+
         this.car = {
-            x: this.canvas.width / 2 - 30, // Center horizontally
-            y: this.canvas.height - 120,   // Near bottom
-            width: 60,
-            height: 100,
-            speed: 6, // Left/right movement speed
-            maxX: this.canvas.width - 200, // Road boundaries
+            x: this.canvas.width / 2 - 35,
+            y: this.canvas.height - 130,
+            width: 70,
+            height: 110,
+            speed: 8,
+            maxX: this.canvas.width - 200 - 70,
             minX: 200
         };
-        
-        // Enemy cars coming from above
+
         this.enemyCars = [];
         this.enemySpawnTimer = 0;
         this.carsAvoided = 0;
-        
-        // Visual effects (simplified for performance)
+
+        this.roadsideObjects = [];
+        this.generateInitialRoadsideObjects();
+
         this.particles = [];
         this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
-        
-        // Audio system
+
         this.audioContext = null;
         this.initAudio();
-        
-        // Setup controls
+
         this.setupControls();
-        
-        // Initialize UI
+
         this.updateUI();
-        
+
         console.log('Level 2 initialized - Driving mode activated!');
         this.gameLoop();
     }
-    
+
     loadProgress() {
-        // Load saved data from level 1
         const savedLives = localStorage.getItem('noobCentralLives');
         const savedEnergy = localStorage.getItem('noobCentralEnergy');
         const savedCharacter = localStorage.getItem('noobCentralCharacter');
-        
+
         this.lives = savedLives ? parseInt(savedLives) : 5;
         this.energy = savedEnergy ? parseInt(savedEnergy) : 0;
         this.selectedCharacter = savedCharacter || 'juan';
         this.maxLives = 5;
-        this.maxEnergy = 100;
-        
-        console.log(`Level 2 loaded with: ${this.lives} lives, ${this.energy}% energy, character: ${this.selectedCharacter}`);
+
+        // Convert leftover energy to a starting fuel bonus
+        this.fuel = 100 + (this.energy / 2);
+        this.maxFuel = this.fuel; // Max fuel can be higher now
+
+        console.log(`Level 2 loaded with: ${this.lives} lives. Converted energy to ${this.fuel} starting fuel.`);
     }
-    
+
     detectMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
-    
+
     initAudio() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -89,438 +84,531 @@ class Level2Game {
             console.log('Audio not supported');
         }
     }
-    
+
     createTone(frequency, duration, type = 'sine', volume = 0.3) {
         if (!this.audioContext) return;
-        
+
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
         oscillator.type = type;
-        
+
         gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
         gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-        
+
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + duration);
     }
-    
+
     setupControls() {
-        // Keyboard controls for left/right movement
         this.keys = {};
-        
+
         document.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
-            
-            if (e.key === 'ArrowLeft') {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.code === 'Space') {
                 e.preventDefault();
-                this.moveLeft();
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                this.moveRight();
-            } else if (e.code === 'Space') {
-                e.preventDefault();
-                this.boost();
             }
         });
-        
+
         document.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
         });
-        
-        // Mobile controls - redefine buttons for racing
+
         const jumpBtn = document.getElementById('jumpBtn');
         if (jumpBtn) {
-            jumpBtn.innerHTML = '⬅️'; // Left arrow
-            jumpBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.moveLeft();
-            });
+            jumpBtn.innerHTML = '⬅️';
+            jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys['ArrowLeft'] = true; });
+            jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.keys['ArrowLeft'] = false; });
         }
-        
+
         const attackBtn = document.getElementById('attackBtn');
         if (attackBtn) {
-            attackBtn.innerHTML = '➡️'; // Right arrow
-            attackBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.moveRight();
-            });
+            attackBtn.innerHTML = '➡️';
+            attackBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys['ArrowRight'] = true; });
+            attackBtn.addEventListener('touchend', (e) => { e.preventDefault(); this.keys['ArrowRight'] = false; });
         }
-        
+
         const specialBtn = document.getElementById('specialBtn');
         if (specialBtn) {
-            specialBtn.innerHTML = '🚀'; // Boost
-            specialBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.boost();
-            });
+            specialBtn.innerHTML = '🚀';
+            specialBtn.addEventListener('click', (e) => { e.preventDefault(); this.boost(); });
         }
     }
-    
+
     moveLeft() {
         if (this.car.x > this.car.minX) {
             this.car.x -= this.car.speed;
-            this.createTone(300, 0.1, 'sine', 0.1);
         }
     }
-    
+
     moveRight() {
         if (this.car.x < this.car.maxX) {
             this.car.x += this.car.speed;
-            this.createTone(350, 0.1, 'sine', 0.1);
         }
     }
-    
+
     boost() {
-        if (this.fuel > 10) {
-            this.gameSpeed = Math.min(8, this.gameSpeed + 1);
-            this.fuel -= 10;
-            this.createTone(500, 0.3, 'sawtooth', 0.2);
-            
-            // Reset speed after boost
-            setTimeout(() => {
-                this.gameSpeed = this.isMobile ? 6 : 4;
-            }, 2000);
+        if (this.fuel > 20) {
+            this.fuel -= 20;
+            this.createTone(600, 0.5, 'sawtooth', 0.2);
+            this.addScreenShake(3, 500);
+
+            // Create boost particles
+            for (let i = 0; i < 20; i++) {
+                this.particles.push({
+                    x: this.car.x + (this.car.width / 2) + (Math.random() - 0.5) * 20,
+                    y: this.car.y + this.car.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 5 + Math.random() * 5,
+                    life: 20 + Math.random() * 10,
+                    color: Math.random() > 0.5 ? '#FFA500' : '#FF4500',
+                    type: 'flame'
+                });
+            }
         }
     }
-    
-    carJump() {
-        if (this.car.onGround) {
-            this.car.velocityY = this.car.jumpPower;
-            this.car.onGround = false;
-            this.createTone(400, 0.2, 'sine', 0.3);
-        }
-    }
-    
-    accelerate() {
-        if (this.fuel > 0) {
-            this.carSpeed = Math.min(this.maxCarSpeed, this.carSpeed + 0.5);
-            this.fuel = Math.max(0, this.fuel - 0.2);
-            this.createTone(200, 0.1, 'sawtooth', 0.2);
-        }
-    }
-    
-    brake() {
-        this.carSpeed = Math.max(0, this.carSpeed - 0.8);
-        this.createTone(150, 0.1, 'square', 0.15);
-    }
-    
+
     spawnEnemyCar() {
-        // Random lane position (left, center, right)
-        const lanes = [250, 350, 450];
+        const lanes = [220, 360, 510];
         const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
-        
+
         const enemyCar = {
-            x: randomLane,
-            y: -100, // Start above screen
-            width: 50,
-            height: 80,
-            speed: this.gameSpeed + Math.random() * 2, // Slightly variable speed
+            x: randomLane - 30, // Centered in lane
+            y: -120,
+            width: 60,
+            height: 100,
+            speed: this.gameSpeed + Math.random() * 2,
             type: Math.random() > 0.5 ? 'police' : 'enemy',
-            
+            color: `hsl(${Math.random() * 360}, 60%, 50%)`, // Random color for variety
+
             update: function() {
-                this.y += this.speed; // Move down the screen
+                this.y += this.speed;
             },
-            
-            draw: function(ctx) {
+
+            draw: function(ctx, frameCount) { // GRAPHICS UPGRADE: Pass frameCount for animations
+                // Shared details
+                const bodyGradient = ctx.createLinearGradient(this.x, this.y, this.x + this.width, this.y + this.height);
+                bodyGradient.addColorStop(0, this.color);
+                bodyGradient.addColorStop(1, '#222');
+                ctx.fillStyle = bodyGradient;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Windshield
+                const glassGradient = ctx.createLinearGradient(0, this.y, 0, this.y + 20);
+                glassGradient.addColorStop(0, '#aaccff');
+                glassGradient.addColorStop(1, '#4466aa');
+                ctx.fillStyle = glassGradient;
+                ctx.fillRect(this.x + 8, this.y + 20, this.width - 16, 25);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(this.x + 10, this.y + 22, 5, 10); // Reflection
+
+                // Wheels
+                ctx.fillStyle = '#111';
+                ctx.fillRect(this.x - 5, this.y + 15, 10, 20);
+                ctx.fillRect(this.x - 5, this.y + 65, 10, 20);
+                ctx.fillRect(this.x + this.width - 5, this.y + 15, 10, 20);
+                ctx.fillRect(this.x + this.width - 5, this.y + 65, 10, 20);
+
                 if (this.type === 'police') {
-                    // Police car - blue with white stripes
+                    ctx.fillStyle = '#FFF';
+                    ctx.fillRect(this.x, this.y + 50, this.width, 15);
+                    ctx.font = 'bold 12px Courier New';
                     ctx.fillStyle = '#0000FF';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    
-                    // Police stripes
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(this.x + 5, this.y + 20, this.width - 10, 8);
-                    ctx.fillRect(this.x + 5, this.y + 40, this.width - 10, 8);
-                    
-                    // Police lights
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(this.x + 10, this.y + 5, 8, 6);
-                    ctx.fillStyle = '#0000FF';
-                    ctx.fillRect(this.x + 32, this.y + 5, 8, 6);
+                    ctx.fillText('POLICE', this.x + 8, this.y + 62);
+
+                    // Flashing lights
+                    const lightOn = frameCount % 20 < 10;
+                    ctx.fillStyle = lightOn ? '#FF0000' : '#440000';
+                    ctx.fillRect(this.x + 10, this.y - 8, 15, 10);
+                    ctx.fillStyle = !lightOn ? '#0000FF' : '#000044';
+                    ctx.fillRect(this.x + 35, this.y - 8, 15, 10);
                 } else {
-                    // Enemy car - red/orange
-                    ctx.fillStyle = '#FF4500';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    
-                    // Car details
-                    ctx.fillStyle = '#DC143C';
-                    ctx.fillRect(this.x + 5, this.y + 10, this.width - 10, 15);
-                    
-                    // Windows
-                    ctx.fillStyle = '#87CEEB';
-                    ctx.fillRect(this.x + 8, this.y + 15, this.width - 16, 10);
+                    // Spoiler
+                    ctx.fillStyle = '#222';
+                    ctx.fillRect(this.x, this.y + this.height - 5, this.width, 10);
+                    ctx.fillRect(this.x - 5, this.y + this.height - 8, 5, 5);
+                    ctx.fillRect(this.x + this.width, this.y + this.height - 8, 5, 5);
                 }
-                
-                // Wheels for both types
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(this.x + 10, this.y + this.height - 5, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(this.x + this.width - 10, this.y + this.height - 5, 6, 0, Math.PI * 2);
-                ctx.fill();
             }
         };
-        
+
         this.enemyCars.push(enemyCar);
     }
-    
+
+    // GRAPHICS UPGRADE: Generate roadside objects
+    generateInitialRoadsideObjects() {
+        for (let i = 0; i < 20; i++) {
+            this.spawnRoadsideObject(Math.random() * this.canvas.height);
+        }
+    }
+
+    spawnRoadsideObject(yPos = -50) {
+        const side = Math.random() > 0.5 ? 'left' : 'right';
+        const object = {
+            x: side === 'left' ? Math.random() * 150 : 650 + Math.random() * 150,
+            y: yPos,
+            width: 20 + Math.random() * 20,
+            height: 40 + Math.random() * 60,
+            speed: this.gameSpeed,
+            type: Math.random() > 0.5 ? 'tree' : 'rock'
+        };
+        this.roadsideObjects.push(object);
+    }
+
     update() {
         if (!this.gameRunning) return;
-        
-        // Update distance based on speed (vertical movement)
-        this.distance += this.gameSpeed * 0.3;
-        this.roadOffset += this.gameSpeed; // Road scrolling effect
-        
-        // Continuous left/right movement if keys held
-        if (this.keys && this.keys['ArrowLeft']) {
-            this.moveLeft();
+
+        this.frameCount++;
+        this.distance += this.gameSpeed * 0.1;
+        this.roadOffset = (this.roadOffset + this.gameSpeed) % 80; // Loop road lines
+
+        let isBoosting = this.keys[' '] || this.keys['Spacebar'];
+        if (isBoosting) {
+            this.boost();
         }
-        if (this.keys && this.keys['ArrowRight']) {
-            this.moveRight();
-        }
-        
-        // Spawn enemy cars from above
+
+        if (this.keys['ArrowLeft']) { this.moveLeft(); }
+        if (this.keys['ArrowRight']) { this.moveRight(); }
+
         this.enemySpawnTimer++;
-        const spawnRate = this.isMobile ? 80 : 100; // Faster spawning on mobile
+        const spawnRate = this.isMobile ? 70 : 90;
         if (this.enemySpawnTimer > spawnRate) {
             this.spawnEnemyCar();
             this.enemySpawnTimer = 0;
         }
-        
-        // Update enemy cars (move down)
+
         this.enemyCars.forEach(car => car.update());
-        
-        // Remove cars that went off screen and count them as avoided
-        const initialCount = this.enemyCars.length;
+
         this.enemyCars = this.enemyCars.filter(car => {
-            if (car.y >= this.canvas.height + 50) {
+            if (car.y > this.canvas.height + 50) {
                 this.carsAvoided++;
                 return false;
             }
             return true;
         });
-        
-        // Check collisions with enemy cars
-        this.checkCollisions();
-        
-        // Gradual fuel consumption
-        this.fuel = Math.max(0, this.fuel - 0.02);
-        
-        // Game over if out of fuel
-        if (this.fuel <= 0) {
-            this.gameOver();
+
+        // GRAPHICS UPGRADE: Update roadside objects
+        this.roadsideObjects.forEach(obj => obj.y += this.gameSpeed);
+        if (this.roadsideObjects.length > 0 && this.roadsideObjects[0].y > this.canvas.height + 50) {
+            this.roadsideObjects.shift();
+            this.spawnRoadsideObject();
         }
-        
-        // Update UI
+
+        this.updateParticles();
+        this.updateScreenShake();
+        this.checkCollisions();
+
+        this.fuel = Math.max(0, this.fuel - 0.03);
+
+        if (this.fuel <= 0 && this.gameRunning) {
+            this.gameOver("Out of Fuel!");
+        }
+
         this.updateUI();
     }
-    
+
     checkCollisions() {
-        this.enemyCars.forEach((enemyCar, index) => {
+        for (let i = this.enemyCars.length - 1; i >= 0; i--) {
+            const enemyCar = this.enemyCars[i];
             if (this.car.x < enemyCar.x + enemyCar.width &&
                 this.car.x + this.car.width > enemyCar.x &&
                 this.car.y < enemyCar.y + enemyCar.height &&
                 this.car.y + this.car.height > enemyCar.y) {
-                
-                // Hit enemy car
+
                 this.takeDamage();
-                this.enemyCars.splice(index, 1);
-                
-                // Add crash particles
-                this.createCrashEffect(enemyCar.x + enemyCar.width/2, enemyCar.y + enemyCar.height/2);
+                this.enemyCars.splice(i, 1);
+                this.createCrashEffect(enemyCar.x + enemyCar.width / 2, enemyCar.y + enemyCar.height / 2);
             }
-        });
+        }
     }
-    
+
     createCrashEffect(x, y) {
-        // Simple crash particles
-        for (let i = 0; i < 8; i++) {
+        this.addScreenShake(5, 300);
+        for (let i = 0; i < 30; i++) {
+            const type = Math.random() > 0.3 ? 'spark' : 'smoke';
             this.particles.push({
                 x: x,
                 y: y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8,
-                life: 30,
-                color: '#FF6600'
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 30 + Math.random() * 20,
+                color: type === 'spark' ? '#FFD700' : '#888',
+                type: type
             });
         }
     }
-    
+
     takeDamage() {
+        if (!this.gameRunning) return;
         this.lives--;
-        this.createTone(200, 0.5, 'triangle', 0.4);
-        
+        this.createTone(150, 0.6, 'sawtooth', 0.4);
+
         if (this.lives <= 0) {
-            this.gameOver();
-        } else {
-            this.updateHeartsDisplay();
+            this.gameOver("Wrecked!");
         }
+        this.updateHeartsDisplay();
     }
-    
+
     updateHeartsDisplay() {
         const heartsEl = document.getElementById('hearts');
         if (heartsEl) {
             heartsEl.innerHTML = '';
             for (let i = 0; i < this.maxLives; i++) {
                 const heart = document.createElement('span');
-                heart.className = i < this.lives ? 'heart' : 'heart lost';
+                heart.className = 'heart';
                 heart.textContent = '❤️';
+                if (i >= this.lives) {
+                    heart.classList.add('lost');
+                }
                 heartsEl.appendChild(heart);
             }
         }
     }
-    
+
     updateUI() {
-        try {
-            const scoreEl = document.getElementById('score');
-            const energyEl = document.getElementById('energy');
-            
-            if (scoreEl) {
-                scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m | Cars Avoided: ${this.carsAvoided || 0}`;
-            }
-            
-            if (energyEl) {
-                energyEl.textContent = `Fuel: ${Math.floor(this.fuel)}%`;
-            }
-            
-            this.updateHeartsDisplay();
-        } catch (error) {
-            console.error('Error updating UI:', error);
-        }
+        const scoreEl = document.getElementById('score');
+        const energyEl = document.getElementById('energy');
+
+        if (scoreEl) scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m | Avoided: ${this.carsAvoided}`;
+        if (energyEl) energyEl.textContent = `Fuel: ${Math.floor(this.fuel)}%`;
+
+        this.updateHeartsDisplay();
     }
-    
-    gameOver() {
+
+    gameOver(reason = "Game Over") {
+        if (!this.gameRunning) return;
         this.gameRunning = false;
+
         const gameOverEl = document.getElementById('gameOver');
         const finalScoreEl = document.getElementById('finalScore');
-        
+        const h2El = gameOverEl.querySelector('h2');
+
+        if (h2El) h2El.textContent = reason;
         if (gameOverEl) gameOverEl.style.display = 'block';
-        if (finalScoreEl) finalScoreEl.textContent = Math.floor(this.distance);
-        
+        if (finalScoreEl) finalScoreEl.textContent = `${Math.floor(this.distance)}m`;
+
         this.createTone(200, 0.8, 'triangle', 0.3);
     }
-    
+
+    addScreenShake(intensity, duration) {
+        this.screenShake.intensity = intensity;
+        this.screenShake.duration = duration;
+    }
+
+    updateScreenShake() {
+        if (this.screenShake.duration > 0) {
+            this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity;
+            this.screenShake.y = (Math.random() - 0.5) * this.screenShake.intensity;
+            this.screenShake.duration--;
+        } else {
+            this.screenShake.x = 0;
+            this.screenShake.y = 0;
+        }
+    }
+
     draw() {
-        // Clear screen with darker background
+        this.ctx.save();
+        this.ctx.translate(this.screenShake.x, this.screenShake.y);
+
+        // Background
         this.ctx.fillStyle = '#001122';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Draw grass/background on sides
-        this.ctx.fillStyle = '#006600';
-        this.ctx.fillRect(0, 0, 200, this.canvas.height); // Left side
-        this.ctx.fillRect(600, 0, 200, this.canvas.height); // Right side
-        
-        // Draw main road (vertical)
-        this.ctx.fillStyle = '#333333';
+
+        // GRAPHICS UPGRADE: Dynamic grass and roadside objects
+        this.ctx.fillStyle = '#005500';
+        this.ctx.fillRect(0, 0, 200, this.canvas.height);
+        this.ctx.fillStyle = '#004400';
+        this.ctx.fillRect(600, 0, 200, this.canvas.height);
+
+        this.roadsideObjects.forEach(obj => {
+            if (obj.type === 'tree') {
+                this.ctx.fillStyle = '#5C4033'; // Trunk
+                this.ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                this.ctx.fillStyle = '#228B22'; // Leaves
+                this.ctx.beginPath();
+                this.ctx.arc(obj.x + obj.width / 2, obj.y, obj.width * 1.5, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else { // Rock
+                this.ctx.fillStyle = '#888';
+                this.ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                this.ctx.fillStyle = '#666';
+                this.ctx.fillRect(obj.x + 5, obj.y + 5, obj.width - 10, obj.height - 10);
+            }
+        });
+
+        // GRAPHICS UPGRADE: Road with texture/gradient
+        const roadGradient = this.ctx.createLinearGradient(200, 0, 600, 0);
+        roadGradient.addColorStop(0, '#444');
+        roadGradient.addColorStop(0.5, '#555');
+        roadGradient.addColorStop(1, '#444');
+        this.ctx.fillStyle = roadGradient;
         this.ctx.fillRect(200, 0, 400, this.canvas.height);
-        
-        // Draw road lane dividers (vertical scrolling)
+
+        // Road lines
         this.ctx.fillStyle = '#FFFF00';
-        for (let i = 0; i < this.canvas.height + 100; i += 40) {
-            const y = (i + this.roadOffset) % (this.canvas.height + 100);
-            // Center lane divider
-            this.ctx.fillRect(395, y, 10, 20);
-            // Left lane divider  
-            this.ctx.fillRect(295, y, 8, 15);
-            // Right lane divider
-            this.ctx.fillRect(495, y, 8, 15);
+        for (let i = -80; i < this.canvas.height; i += 80) {
+            const y = (i + this.roadOffset) % (this.canvas.height + 80);
+            this.ctx.fillRect(345, y, 10, 50);
+            this.ctx.fillRect(445, y, 10, 50);
         }
-        
-        // Draw road edges
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillRect(200, 0, 5, this.canvas.height); // Left edge
-        this.ctx.fillRect(595, 0, 5, this.canvas.height); // Right edge
-        
-        // Draw enemy cars
-        this.enemyCars.forEach(car => car.draw(this.ctx));
-        
-        // Draw player car
+
+        // Road edges / curbs
+        this.ctx.fillStyle = '#DDDDDD';
+        this.ctx.fillRect(200, 0, 10, this.canvas.height);
+        this.ctx.fillRect(590, 0, 10, this.canvas.height);
+        this.ctx.fillStyle = '#999999';
+        this.ctx.fillRect(205, 0, 5, this.canvas.height);
+        this.ctx.fillRect(590, 0, 5, this.canvas.height);
+
+        this.enemyCars.forEach(car => car.draw(this.ctx, this.frameCount));
+
         this.drawPlayerCar();
-        
-        // Draw particles (crash effects)
+
         this.drawParticles();
-        
-        // Level 2 indicator
-        this.ctx.fillStyle = '#00FF00';
-        this.ctx.font = '16px Courier New';
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText('RACING MODE', this.canvas.width - 20, 30);
+
+        this.ctx.restore();
     }
-    
+
+    updateParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+
     drawParticles() {
-        this.particles.forEach((particle, index) => {
-            this.ctx.fillStyle = particle.color;
-            this.ctx.fillRect(particle.x, particle.y, 3, 3);
-            
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            particle.life--;
-            
-            if (particle.life <= 0) {
-                this.particles.splice(index, 1);
+        this.particles.forEach(p => {
+            this.ctx.fillStyle = p.color;
+            if (p.type === 'spark') {
+                this.ctx.fillRect(p.x, p.y, 4, 4);
+            } else if (p.type === 'flame') {
+                this.ctx.globalAlpha = p.life / 30;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.life / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+            } else { // smoke
+                this.ctx.globalAlpha = p.life / 50;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
             }
         });
     }
-    
+
+    // GRAPHICS UPGRADE: Highly detailed player car drawing function
     drawPlayerCar() {
         const car = this.car;
-        
-        // Player car body (vertical orientation)
-        this.ctx.fillStyle = '#FF4500';
+
+        // Define car style based on selected character
+        let style = {
+            bodyColor: '#FF4500', // Default: orange
+            roofColor: '#DC143C',
+            carType: 'sedan'
+        };
+
+        switch(this.selectedCharacter) {
+            case 'jay': // Muscular blue muscle car
+                style = { bodyColor: '#1E90FF', roofColor: '#00008B', carType: 'muscle' };
+                break;
+            case 'kim': // Sleek pink sports car
+                style = { bodyColor: '#FF69B4', roofColor: '#FF1493', carType: 'sports' };
+                break;
+            case 'julian': // Rugged green off-roader
+                style = { bodyColor: '#228B22', roofColor: '#556B2F', carType: 'offroad' };
+                break;
+            case 'juan': // Classic black retro car
+                style = { bodyColor: '#222222', roofColor: '#000000', carType: 'classic' };
+                break;
+        }
+
+        // Car Shadow
+        this.ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        this.ctx.beginPath();
+        this.ctx.ellipse(car.x + car.width / 2, car.y + car.height + 5, car.width / 2, 8, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Car Body
+        const bodyGradient = this.ctx.createLinearGradient(car.x, car.y, car.x + car.width, car.y);
+        bodyGradient.addColorStop(0, '#fff');
+        bodyGradient.addColorStop(0.1, style.bodyColor);
+        bodyGradient.addColorStop(0.9, style.bodyColor);
+        bodyGradient.addColorStop(1, '#000');
+        this.ctx.fillStyle = bodyGradient;
         this.ctx.fillRect(car.x, car.y, car.width, car.height);
-        
-        // Car hood (top part)
-        this.ctx.fillStyle = '#DC143C';
-        this.ctx.fillRect(car.x + 5, car.y, car.width - 10, 25);
-        
-        // Windshield
-        this.ctx.fillStyle = '#87CEEB';
-        this.ctx.fillRect(car.x + 8, car.y + 20, car.width - 16, 15);
-        
-        // Car body details
-        this.ctx.fillStyle = '#B22222';
-        this.ctx.fillRect(car.x + 3, car.y + 40, car.width - 6, 40);
-        
-        // Back windshield
-        this.ctx.fillStyle = '#87CEEB';
-        this.ctx.fillRect(car.x + 8, car.y + 75, car.width - 16, 12);
-        
-        // Wheels (positioned for vertical car)
-        this.ctx.fillStyle = '#000000';
-        this.ctx.beginPath();
-        this.ctx.arc(car.x + 10, car.y + 15, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.arc(car.x + car.width - 10, car.y + 15, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.arc(car.x + 10, car.y + car.height - 15, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.arc(car.x + car.width - 10, car.y + car.height - 15, 8, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Headlights (at front of car)
+
+        // Roof and Windows
+        this.ctx.fillStyle = style.roofColor;
+        this.ctx.fillRect(car.x + 5, car.y + 15, car.width - 10, 40);
+
+        const glassGradient = this.ctx.createLinearGradient(0, car.y, 0, car.y + 50);
+        glassGradient.addColorStop(0, '#aaccff');
+        glassGradient.addColorStop(1, '#4466aa');
+        this.ctx.fillStyle = glassGradient;
+        this.ctx.fillRect(car.x + 10, car.y + 20, car.width - 20, 30);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.4)'; // Reflection
+        this.ctx.fillRect(car.x + 15, car.y + 25, 10, 15);
+
+        // Character specific details
+        if (style.carType === 'muscle') { // Jay
+            this.ctx.fillStyle = '#444'; // Hood scoop
+            this.ctx.fillRect(car.x + car.width/2 - 10, car.y, 20, 15);
+        } else if (style.carType === 'offroad') { // Julian
+            this.ctx.fillStyle = '#444'; // Roof rack
+            this.ctx.fillRect(car.x, car.y + 10, car.width, 5);
+        } else if (style.carType === 'sports') { // Kim
+            this.ctx.fillStyle = '#444'; // Spoiler
+            this.ctx.fillRect(car.x, car.y + car.height, car.width, 10);
+        }
+
+        // Headlights
         this.ctx.fillStyle = '#FFFF00';
-        this.ctx.fillRect(car.x + 8, car.y + 2, 12, 6);
-        this.ctx.fillRect(car.x + car.width - 20, car.y + 2, 12, 6);
+        this.ctx.fillRect(car.x, car.y + 5, 10, 15);
+        this.ctx.fillRect(car.x + car.width - 10, car.y + 5, 10, 15);
+
+        // Brake Lights
+        this.ctx.fillStyle = (this.keys['ArrowDown'] || this.keys['s']) ? '#FF0000' : '#8B0000';
+        this.ctx.fillRect(car.x, car.y + car.height - 15, 10, 10);
+        this.ctx.fillRect(car.x + car.width - 10, car.y + car.height - 15, 10, 10);
+
+        // Wheels
+        this.ctx.fillStyle = '#111';
+        this.ctx.fillRect(car.x - 10, car.y + 15, 15, 25);
+        this.ctx.fillRect(car.x - 10, car.y + car.height - 45, 15, 25);
+        this.ctx.fillRect(car.x + car.width - 5, car.y + 15, 15, 25);
+        this.ctx.fillRect(car.x + car.width - 5, car.y + car.height - 45, 15, 25);
+        // Hubcaps
+        this.ctx.fillStyle = '#AAA';
+        this.ctx.beginPath();
+        this.ctx.arc(car.x - 2.5, car.y + 27.5, 4, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.arc(car.x + car.width - 2.5, car.y + 27.5, 4, 0, Math.PI * 2);
+        this.ctx.fill();
     }
-    
+
     gameLoop() {
+        if (!this.gameRunning && this.particles.length === 0) {
+            // Freeze game completely on game over after particles are gone
+            return;
+        }
         this.update();
         this.draw();
         requestAnimationFrame(() => this.gameLoop());
     }
 }
 
-// Start Level 2 when page loads
 window.addEventListener('load', () => {
     console.log('Level 2 page loaded, starting game...');
     new Level2Game();
