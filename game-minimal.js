@@ -450,7 +450,20 @@ class Game {
         window.gameInstance = this;
         
         // Verify critical UI elements exist before starting
-        this.verifyUIElements();
+        console.log('Checking for required UI elements...');
+        const scoreEl = document.getElementById('score');
+        const energyEl = document.getElementById('energy');
+        const heartsEl = document.getElementById('hearts');
+        const canvasEl = document.getElementById('gameCanvas');
+        
+        console.log('Score element found:', !!scoreEl);
+        console.log('Energy element found:', !!energyEl);
+        console.log('Hearts element found:', !!heartsEl);
+        console.log('Canvas element found:', !!canvasEl);
+        
+        if (!scoreEl || !energyEl || !heartsEl || !canvasEl) {
+            throw new Error('Missing required UI elements');
+        }
         
         this.gameLoop();
 
