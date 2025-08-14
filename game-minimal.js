@@ -25,6 +25,14 @@ class Game {
         this.specialPowerTimer = 0;
         this.specialPowerDuration = 600; // 10 seconds at 60fps
         this.canUseSpecialPower = false;
+        
+        // Level transition system
+        this.levelTransitionActive = false;
+        this.levelTransitionTimer = 0;
+        this.carAppeared = false;
+        this.carX = this.canvas.width + 100;
+        this.playerMovingToCar = false;
+        this.targetCarX = 400; // Where car will stop
 
         // Mobile performance settings
         this.isMobile = this.detectMobile();
@@ -758,6 +766,92 @@ class Game {
                 this.specialPowerActive = false;
                 console.log('Special power ended.');
             }
+        }
+    }
+    
+    startLevelTransition() {
+        this.levelTransitionActive = true;
+        this.gameRunning = false; // Stop normal game updates
+        this.carAppeared = true;
+        this.levelTransitionTimer = 90; // 3 seconds pause
+        console.log('Level transition started! Car approaching...');
+    }
+    
+    updateLevelTransition() {
+        if (!this.levelTransitionActive) return;
+        
+        this.levelTransitionTimer--;
+        
+        // Phase 1: Pause and show car appearing
+        if (this.levelTransitionTimer > 0) {
+            // Car moves into view during pause
+            if (this.carX > this.targetCarX) {
+                this.carX -= 3;
+            }
+        }
+        // Phase 2: Move player toward car
+        else if (!this.playerMovingToCar) {
+            this.playerMovingToCar = true;
+        }
+        else {
+            // Move player toward car
+            if (this.player.x < this.targetCarX - 100) {
+                this.player.x += 2;
+            } else {
+                // Transition complete - redirect to level 2
+                this.transitionToLevel2();
+            }
+        }
+    }
+    
+    transitionToLevel2() {
+        // Save game progress
+        localStorage.setItem('noobCentralLevel', '2');
+        localStorage.setItem('noobCentralCharacter', this.selectedCharacter);
+        localStorage.setItem('noobCentralLives', this.lives.toString());
+        localStorage.setItem('noobCentralEnergy', this.energy.toString());
+        
+        // Redirect to level 2
+        window.location.href = 'level2.html';
+    }
+    
+    drawCar() {
+        const carY = this.canvas.height - 120;
+        
+        // Car body
+        this.ctx.fillStyle = '#FF4500';
+        this.ctx.fillRect(this.carX, carY, 120, 40);
+        
+        // Car roof
+        this.ctx.fillStyle = '#DC143C';
+        this.ctx.fillRect(this.carX + 20, carY - 20, 80, 20);
+        
+        // Car windows
+        this.ctx.fillStyle = '#87CEEB';
+        this.ctx.fillRect(this.carX + 25, carY - 18, 25, 15);
+        this.ctx.fillRect(this.carX + 70, carY - 18, 25, 15);
+        
+        // Car wheels
+        this.ctx.fillStyle = '#000000';
+        this.ctx.beginPath();
+        this.ctx.arc(this.carX + 20, carY + 40, 12, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.arc(this.carX + 100, carY + 40, 12, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Car headlights
+        this.ctx.fillStyle = '#FFFF00';
+        this.ctx.fillRect(this.carX + 115, carY + 5, 8, 8);
+        this.ctx.fillRect(this.carX + 115, carY + 25, 8, 8);
+        
+        // Level transition text
+        if (this.levelTransitionTimer > 0) {
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '24px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('LEVEL 2 UNLOCKED!', this.canvas.width / 2, this.canvas.height / 2 - 50);
+            this.ctx.fillText('Get in the car!', this.canvas.width / 2, this.canvas.height / 2 - 20);
         }
     }
 
@@ -2561,13 +2655,22 @@ class Game {
             return;
         }
 
-        this.distance += this.gameSpeed * 0.1;
+        // Check for level transition at 600m
+        if (this.distance >= 600 && !this.levelTransitionActive && !this.carAppeared) {
+            this.startLevelTransition();
+        }
+        
+        // Only update distance if not in transition
+        if (!this.levelTransitionActive) {
+            this.distance += this.gameSpeed * 0.1;
+        }
 
         // Update visual effects
         this.updateScreenShake();
         this.updateFlashEffect();
         this.updateInvulnerability();
         this.updateSpecialPower();
+        this.updateLevelTransition();
 
         // Update particles (emergency performance mode)
         if (!this.disableParticles) {
@@ -2778,6 +2881,11 @@ class Game {
 
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
+        
+        // Draw level transition car
+        if (this.carAppeared) {
+            this.drawCar();
+        }
         
         // Draw power-ups
         this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));

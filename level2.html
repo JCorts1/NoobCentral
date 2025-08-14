@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Noob Central</title>
+    <title>Noob Central - Level 2</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            background: #222;
+            background: #111;
             color: white;
             font-family: 'Courier New', monospace;
             overflow: hidden;
@@ -48,7 +48,7 @@
         }
 
         #gameCanvas {
-            background: #1a1a2e;
+            background: #000;
             border: 15px solid #333;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
             image-rendering: pixelated;
@@ -94,32 +94,6 @@
             color: #666666;
             text-shadow: none;
             opacity: 0.5;
-        }
-
-
-        .character-select {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .character-btn {
-            padding: 10px 15px;
-            background: #444;
-            border: 2px solid #00ff00;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        .character-btn:hover, .character-btn.active {
-            background: #00ff00;
-            color: #000;
         }
 
         .mobile-controls {
@@ -196,18 +170,6 @@
                 display: flex;
             }
             
-            .character-select {
-                bottom: 120px;
-                flex-wrap: wrap;
-                max-width: 90vw;
-            }
-            
-            .character-btn {
-                font-size: 12px;
-                padding: 8px 12px;
-                margin: 2px;
-            }
-            
             #ui {
                 font-size: 12px;
                 top: 70px;
@@ -215,39 +177,10 @@
                 padding: 8px;
             }
         }
-
-        @media (max-height: 600px) {
-            .character-select {
-                bottom: 80px;
-            }
-            
-            .mobile-controls, .jump-btn {
-                bottom: 10px;
-            }
-        }
-
-        @media (orientation: landscape) and (max-height: 500px) {
-            .character-select {
-                bottom: 60px;
-                left: 10px;
-                transform: none;
-                flex-direction: row;
-            }
-            
-            .mobile-controls {
-                right: 10px;
-                bottom: 10px;
-            }
-            
-            .jump-btn {
-                left: 10px;
-                bottom: 10px;
-            }
-        }
     </style>
 </head>
 <body>
-    <div id="gameTitle">NOOB CENTRAL</div>
+    <div id="gameTitle">NOOB CENTRAL - LEVEL 2</div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
@@ -258,16 +191,8 @@
             <div id="gameOver" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; text-align: center;">
                 <h2>Game Over!</h2>
                 <p>Distance: <span id="finalScore">0</span>m</p>
-                <button onclick="location.reload()" style="padding: 10px 20px; background: #00ff00; border: none; border-radius: 5px; cursor: pointer;">Restart</button>
+                <button onclick="location.href='index.html'" style="padding: 10px 20px; background: #00ff00; border: none; border-radius: 5px; cursor: pointer;">Back to Level 1</button>
             </div>
-        </div>
-
-
-        <div class="character-select">
-            <button class="character-btn active" data-character="juan">Juan</button>
-            <button class="character-btn" data-character="kim">Kim</button>
-            <button class="character-btn" data-character="julian">Julian-ElPez</button>
-            <button class="character-btn" data-character="jay">Jay</button>
         </div>
 
         <button class="control-btn jump-btn" id="jumpBtn">⬆️</button>
@@ -278,12 +203,6 @@
         </div>
     </div>
 
-    <audio id="backgroundMusic" loop>
-        <source src="https://www.youtube.com/watch?v=q4WMsHEiyQ0" type="audio/mpeg">
-    </audio>
-    
-    <!-- Audio context will be created in JavaScript for sound effects -->
-    
     <script>
         // Error detection and debugging
         window.addEventListener('error', function(e) {
@@ -291,8 +210,8 @@
             alert('JavaScript error: ' + e.message + ' at line ' + e.lineno);
         });
         
-        console.log('Starting game initialization...');
+        console.log('Starting Level 2...');
     </script>
-    <script src="game-minimal.js?v=3.2"></script>
+    <script src="level2.js?v=2.0"></script>
 </body>
 </html>
