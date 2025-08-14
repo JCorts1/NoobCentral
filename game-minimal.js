@@ -449,6 +449,9 @@ class Game {
         // Set global reference for particle effects
         window.gameInstance = this;
         
+        // Verify critical UI elements exist before starting
+        this.verifyUIElements();
+        
         this.gameLoop();
 
         // Initialize character selection UI to match saved character
@@ -560,6 +563,29 @@ class Game {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                window.innerWidth <= 768 ||
                ('ontouchstart' in window);
+    }
+
+    verifyUIElements() {
+        console.log('Verifying UI elements...');
+        const requiredElements = ['score', 'energy', 'hearts', 'gameCanvas'];
+        const missing = [];
+        
+        requiredElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (!element) {
+                missing.push(id);
+                console.error(`Missing UI element: ${id}`);
+            } else {
+                console.log(`Found UI element: ${id}`);
+            }
+        });
+        
+        if (missing.length > 0) {
+            console.error('Missing UI elements:', missing);
+            throw new Error(`Missing required UI elements: ${missing.join(', ')}`);
+        }
+        
+        console.log('All UI elements verified successfully');
     }
 
     initAudio() {
@@ -704,22 +730,34 @@ class Game {
     }
 
     updateHeartsDisplay() {
-        const heartsContainer = document.getElementById('hearts');
-        if (!heartsContainer) return; // Exit if element doesn't exist
-        
-        heartsContainer.innerHTML = '';
-        
-        for (let i = 0; i < this.maxLives; i++) {
-            const heart = document.createElement('span');
-            heart.className = 'heart';
-            heart.textContent = '❤️';
+        try {
+            console.log('Updating hearts display...');
+            const heartsContainer = document.getElementById('hearts');
+            console.log('Hearts container:', heartsContainer);
             
-            if (i >= this.lives) {
-                heart.classList.add('lost');
-                heart.textContent = '🤍';
+            if (!heartsContainer) {
+                console.warn('Hearts container not found!');
+                return; // Exit if element doesn't exist
             }
             
-            heartsContainer.appendChild(heart);
+            heartsContainer.innerHTML = '';
+            
+            for (let i = 0; i < this.maxLives; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'heart';
+                heart.textContent = '❤️';
+                
+                if (i >= this.lives) {
+                    heart.classList.add('lost');
+                    heart.textContent = '🤍';
+                }
+                
+                heartsContainer.appendChild(heart);
+            }
+            console.log('Hearts display updated successfully');
+        } catch (error) {
+            console.error('Error updating hearts display:', error);
+            console.error('Stack trace:', error.stack);
         }
     }
 
@@ -2266,16 +2304,32 @@ class Game {
         this.checkCollisions();
         this.checkBulletCollisions();
 
-        // Update UI with error checking
+        // Update UI with detailed error checking
         try {
+            console.log('Trying to update UI...');
             const scoreEl = document.getElementById('score');
             const energyEl = document.getElementById('energy');
             
-            if (scoreEl) scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m`;
-            if (energyEl) energyEl.textContent = `Energy: 100%`;
+            console.log('Score element:', scoreEl);
+            console.log('Energy element:', energyEl);
+            
+            if (scoreEl) {
+                console.log('Updating score...');
+                scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m`;
+            } else {
+                console.warn('Score element not found!');
+            }
+            
+            if (energyEl) {
+                console.log('Updating energy...');
+                energyEl.textContent = `Energy: 100%`;
+            } else {
+                console.warn('Energy element not found!');
+            }
             // Character name removed from UI
         } catch (error) {
             console.error('Error updating UI:', error);
+            console.error('Stack trace:', error.stack);
         }
     }
 
