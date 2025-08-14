@@ -17,6 +17,8 @@ class Game {
         this.maxLives = 5;
         this.invulnerable = false;
         this.invulnerabilityTimer = 0;
+        this.energy = 0; // Start with 0% energy
+        this.maxEnergy = 100;
 
         // Mobile performance settings
         this.isMobile = this.detectMobile();
@@ -2229,6 +2231,8 @@ class Game {
 
                     // Add points for killing enemy
                     this.distance += 10;
+                    // Increase energy when killing enemies
+                    this.energy = Math.min(this.maxEnergy, this.energy + 10);
 
                     console.log('Enemy hit! Bullet collision detected');
                     break; // Exit enemy loop since bullet is destroyed
@@ -2332,35 +2336,21 @@ class Game {
         // TEMPORARY: Disable UI updates to fix deployment error
         console.log('DEPLOYMENT FIX: UI updates disabled temporarily');
         
-        // Update UI with detailed error checking - DISABLED FOR DEBUGGING
-        /*
+        // Update UI
         try {
-            console.log('Trying to update UI...');
             const scoreEl = document.getElementById('score');
             const energyEl = document.getElementById('energy');
             
-            console.log('Score element:', scoreEl);
-            console.log('Energy element:', energyEl);
-            
             if (scoreEl) {
-                console.log('Updating score...');
                 scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m`;
-            } else {
-                console.warn('Score element not found!');
             }
             
             if (energyEl) {
-                console.log('Updating energy...');
-                energyEl.textContent = `Energy: 100%`;
-            } else {
-                console.warn('Energy element not found!');
+                energyEl.textContent = `Energy: ${Math.floor(this.energy)}%`;
             }
-            // Character name removed from UI
         } catch (error) {
             console.error('Error updating UI:', error);
-            console.error('Stack trace:', error.stack);
         }
-        */
     }
 
     draw() {
