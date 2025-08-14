@@ -11,7 +11,7 @@ class Game {
         this.canvas.width = 800;
         this.canvas.height = 600;
         this.distance = 0;
-        this.gameSpeed = 2;
+        this.gameSpeed = this.isMobile ? 3 : 2; // Faster game speed on mobile
         this.gameRunning = true;
         this.lives = 5;
         this.maxLives = 5;
@@ -23,15 +23,15 @@ class Game {
         this.performanceMode = this.isMobile ? 'low' : 'high';
         this.frameCount = 0;
         this.lastFrameTime = performance.now();
-        this.targetFPS = this.isMobile ? 45 : 60;
+        this.targetFPS = this.isMobile ? 60 : 60; // Same high FPS on mobile
         this.skipFrames = 0;
 
-        // Better mobile optimizations - maintain visual quality
+        // Mobile optimizations - wider view for better gameplay
         if (this.isMobile) {
-            this.canvas.width = 600;
+            // Much wider canvas so you can see enemies coming from far away
+            this.canvas.width = 800;
             this.canvas.height = 400;
             this.ctx.imageSmoothingEnabled = false;
-            // Smart optimizations that keep quality
             this.mobileOptimizations = true;
         } else {
             this.mobileOptimizations = false;
@@ -654,7 +654,7 @@ class Game {
 
     createPlayer() {
         return {
-            x: 100,
+            x: this.isMobile ? 60 : 100, // Move player more to the left on mobile for better view distance
             y: this.canvas.height - 170,
             width: 80,
             height: 120,
