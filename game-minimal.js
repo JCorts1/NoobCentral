@@ -18,6 +18,20 @@ class Game {
         this.invulnerable = false;
         this.invulnerabilityTimer = 0;
 
+        // Mobile performance settings
+        this.isMobile = this.detectMobile();
+        this.performanceMode = this.isMobile ? 'low' : 'high';
+        this.frameCount = 0;
+        this.lastFrameTime = performance.now();
+        this.targetFPS = this.isMobile ? 30 : 60;
+
+        // Optimize canvas size for mobile
+        if (this.isMobile) {
+            this.canvas.width = 400;
+            this.canvas.height = 300;
+            this.ctx.imageSmoothingEnabled = false;
+        }
+
         // Load saved character or default to Juan
         this.selectedCharacter = this.loadSavedCharacter() || 'juan';
 
@@ -82,8 +96,9 @@ class Game {
         // Create multiple parallax background layers
         this.backgroundLayers = this.createParallaxLayers();
 
-        // Create main detailed buildings (much larger and more detailed)
-        for (let i = 0; i < 12; i++) {
+        // Create main detailed buildings (reduce count on mobile)
+        const mainBuildingCount = this.performanceMode === 'low' ? 6 : 12;
+        for (let i = 0; i < mainBuildingCount; i++) {
             const buildingType = Math.random();
             let building;
 
@@ -432,9 +447,14 @@ class Game {
     createParallaxLayers() {
         const layers = [];
         
+        // Reduce background complexity on mobile
+        const mountainCount = this.performanceMode === 'low' ? 8 : 15;
+        const buildingCount = this.performanceMode === 'low' ? 10 : 20;
+        const cloudCount = this.performanceMode === 'low' ? 4 : 8;
+        
         // Far mountains layer (slowest)
         const mountains = [];
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < mountainCount; i++) {
             mountains.push({
                 x: i * 200,
                 y: this.canvas.height - 300 - Math.random() * 100,
@@ -460,7 +480,7 @@ class Game {
 
         // Distant city layer (medium slow)
         const distantBuildings = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < buildingCount; i++) {
             distantBuildings.push({
                 x: 400 + i * 150,
                 y: this.canvas.height - 200 - Math.random() * 100,
@@ -492,7 +512,7 @@ class Game {
 
         // Clouds layer (very slow)
         const clouds = [];
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < cloudCount; i++) {
             clouds.push({
                 x: i * 300 + Math.random() * 200,
                 y: 50 + Math.random() * 150,
@@ -516,6 +536,12 @@ class Game {
         });
 
         return layers;
+    }
+
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               window.innerWidth <= 768 ||
+               ('ontouchstart' in window);
     }
 
     injectMobileStyles() {
@@ -1882,9 +1908,13 @@ class Game {
     }
 
     createExplosion(x, y) {
+        // Reduce particle count on mobile for performance
+        const particleCount = this.performanceMode === 'low' ? 8 : 15;
+        const sparkCount = this.performanceMode === 'low' ? 4 : 8;
+        
         // Create multiple explosion particles
-        for (let i = 0; i < 15; i++) {
-            const angle = (Math.PI * 2 * i) / 15;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
             const speed = 2 + Math.random() * 4;
             const vx = Math.cos(angle) * speed;
             const vy = Math.sin(angle) * speed;
@@ -1895,7 +1925,7 @@ class Game {
         }
         
         // Add some sparks
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < sparkCount; i++) {
             const vx = (Math.random() - 0.5) * 8;
             const vy = (Math.random() - 0.5) * 8;
             this.particles.push(this.createParticle(x, y, vx, vy, '#FFFFFF', 1, 15 + Math.random() * 10));
@@ -1903,8 +1933,11 @@ class Game {
     }
 
     createJumpParticles(x, y) {
+        // Reduce particles on mobile
+        const particleCount = this.performanceMode === 'low' ? 2 : 5;
+        
         // Dust particles when jumping
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < particleCount; i++) {
             const vx = (Math.random() - 0.5) * 4;
             const vy = Math.random() * -2;
             this.particles.push(this.createParticle(x + Math.random() * 40, y, vx, vy, '#8B4513', 2 + Math.random() * 2, 20 + Math.random() * 10, 0.1));
@@ -1912,8 +1945,11 @@ class Game {
     }
 
     createMuzzleFlash(x, y) {
+        // Reduce particles on mobile
+        const particleCount = this.performanceMode === 'low' ? 1 : 3;
+        
         // Muzzle flash when shooting
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < particleCount; i++) {
             const vx = 2 + Math.random() * 3;
             const vy = (Math.random() - 0.5) * 2;
             this.particles.push(this.createParticle(x, y, vx, vy, '#FFFF00', 3 + Math.random() * 2, 8 + Math.random() * 5));
@@ -2088,9 +2124,10 @@ class Game {
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Add stars
+        // Add stars (reduce on mobile)
+        const starCount = this.performanceMode === 'low' ? 20 : 50;
         this.ctx.fillStyle = '#FFFFFF';
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < starCount; i++) {
             const x = (i * 13 + this.distance * 0.1) % this.canvas.width;
             const y = (i * 7) % (this.canvas.height * 0.4);
             if (Math.sin(this.distance * 0.01 + i) > 0.8) {
@@ -2130,8 +2167,9 @@ class Game {
             this.ctx.fillRect(x, this.canvas.height - 45, 20, 3);
         }
 
-        // Street lights
-        for (let i = 0; i < this.canvas.width; i += 150) {
+        // Street lights (simplify on mobile)
+        const lightSpacing = this.performanceMode === 'low' ? 200 : 150;
+        for (let i = 0; i < this.canvas.width; i += lightSpacing) {
             const x = (i - this.distance * 1.2) % this.canvas.width;
 
             // Light pole
@@ -2142,11 +2180,13 @@ class Game {
             this.ctx.fillStyle = '#CCCCCC';
             this.ctx.fillRect(x - 8, this.canvas.height - 125, 20, 8);
 
-            // Light glow
-            this.ctx.fillStyle = 'rgba(255, 255, 150, 0.3)';
-            this.ctx.beginPath();
-            this.ctx.arc(x + 2, this.canvas.height - 120, 30, 0, Math.PI * 2);
-            this.ctx.fill();
+            // Light glow (skip on mobile for performance)
+            if (this.performanceMode !== 'low') {
+                this.ctx.fillStyle = 'rgba(255, 255, 150, 0.3)';
+                this.ctx.beginPath();
+                this.ctx.arc(x + 2, this.canvas.height - 120, 30, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
         }
 
         // Draw enemies
@@ -2180,10 +2220,20 @@ class Game {
     }
 
     gameLoop() {
-        if (this.gameRunning) {
-            this.update();
+        const currentTime = performance.now();
+        const deltaTime = currentTime - this.lastFrameTime;
+        const targetFrameTime = 1000 / this.targetFPS;
+
+        // Throttle frame rate on mobile
+        if (deltaTime >= targetFrameTime) {
+            if (this.gameRunning) {
+                this.update();
+            }
+            this.draw();
+            this.lastFrameTime = currentTime - (deltaTime % targetFrameTime);
+            this.frameCount++;
         }
-        this.draw();
+        
         requestAnimationFrame(() => this.gameLoop());
     }
 }
