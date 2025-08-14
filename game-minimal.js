@@ -19,20 +19,21 @@ class Game {
         this.invulnerabilityTimer = 0;
         this.energy = 0; // Start with 0% energy
         this.maxEnergy = 100;
-        
+
         // Special power system
         this.specialPowerActive = false;
         this.specialPowerTimer = 0;
         this.specialPowerDuration = 600; // 10 seconds at 60fps
         this.canUseSpecialPower = false;
-        
+
         // Level transition system
         this.levelTransitionActive = false;
         this.levelTransitionTimer = 0;
         this.carAppeared = false;
-        this.carX = this.canvas.width + 100;
+        this.carX = this.canvas.width + 50; // Start closer to screen
         this.playerMovingToCar = false;
-        this.targetCarX = 400; // Where car will stop
+        this.targetCarX = 350; // Closer target position
+        this.lastLoggedDistance = 0; // For debug logging
 
         // Mobile performance settings
         this.isMobile = this.detectMobile();
@@ -41,11 +42,11 @@ class Game {
         this.lastFrameTime = performance.now();
         this.targetFPS = 30; // Lower target FPS for better performance
         this.skipFrames = 0;
-        
+
         // Performance optimization variables
         this.timeCache = 0; // Cache for expensive time calculations
         this.effectsUpdateCounter = 0; // Counter for effect updates
-        
+
         // Emergency performance mode - disable expensive features
         this.emergencyPerformanceMode = true;
         this.disableShadows = true;
@@ -59,7 +60,7 @@ class Game {
             this.canvas.height = 400;
             this.ctx.imageSmoothingEnabled = false;
             this.mobileOptimizations = true;
-            
+
             // Aggressive performance optimizations for mobile
             this.maxParticles = 20; // Limit particles on mobile
             this.lightSpacing = 300; // Fewer street lights
@@ -457,7 +458,7 @@ class Game {
         this.enemies = [];
         this.bullets = [];
         this.spawnTimer = 0;
-        
+
         // Power-ups and collectibles
         this.powerUps = [];
         this.collectibles = [];
@@ -481,31 +482,31 @@ class Game {
         this.injectMobileStyles();
 
         console.log('Starting game loop...');
-        
+
         // Set global reference for particle effects
         window.gameInstance = this;
-        
+
         // Verify critical UI elements exist before starting
         console.log('Checking for required UI elements...');
         const scoreEl = document.getElementById('score');
         const energyEl = document.getElementById('energy');
         const heartsEl = document.getElementById('hearts');
         const canvasEl = document.getElementById('gameCanvas');
-        
+
         console.log('Score element found:', !!scoreEl);
         console.log('Energy element found:', !!energyEl);
         console.log('Hearts element found:', !!heartsEl);
         console.log('Canvas element found:', !!canvasEl);
-        
+
         if (!scoreEl || !energyEl || !heartsEl || !canvasEl) {
             throw new Error('Missing required UI elements');
         }
-        
+
         this.gameLoop();
 
         // Initialize character selection UI to match saved character
         this.updateCharacterSelectionUI();
-        
+
         // Initialize hearts display
         try {
             this.updateHeartsDisplay();
@@ -516,12 +517,12 @@ class Game {
 
     createParallaxLayers() {
         const layers = [];
-        
+
         // Reduce background complexity on mobile
         const mountainCount = this.performanceMode === 'low' ? 8 : 15;
         const buildingCount = this.performanceMode === 'low' ? 10 : 20;
         const cloudCount = this.performanceMode === 'low' ? 4 : 8;
-        
+
         // Far mountains layer (slowest)
         const mountains = [];
         for (let i = 0; i < mountainCount; i++) {
@@ -618,7 +619,7 @@ class Game {
         console.log('Verifying UI elements...');
         const requiredElements = ['score', 'energy', 'hearts', 'gameCanvas'];
         const missing = [];
-        
+
         requiredElements.forEach(id => {
             const element = document.getElementById(id);
             if (!element) {
@@ -628,12 +629,12 @@ class Game {
                 console.log(`Found UI element: ${id}`);
             }
         });
-        
+
         if (missing.length > 0) {
             console.error('Missing UI elements:', missing);
             throw new Error(`Missing required UI elements: ${missing.join(', ')}`);
         }
-        
+
         console.log('All UI elements verified successfully');
     }
 
@@ -664,16 +665,16 @@ class Game {
         try {
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
-            
+
             oscillator.frequency.value = frequency;
             oscillator.type = type;
-            
+
             gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
-            
+
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + duration);
         } catch (error) {
@@ -708,28 +709,28 @@ class Game {
         setTimeout(() => this.createTone(150, 0.4, 'sine', 0.2), 300);
         setTimeout(() => this.createTone(100, 0.6, 'triangle', 0.2), 600);
     }
-    
+
     playPowerUpSound() {
         // Power-up sound - ascending tones
         this.createTone(400, 0.2, 'sine', 0.3);
         setTimeout(() => this.createTone(600, 0.2, 'sine', 0.3), 100);
         setTimeout(() => this.createTone(800, 0.3, 'sine', 0.3), 200);
     }
-    
+
     playCollectibleSound() {
         // Collectible sound - gentle chimes
         this.createTone(523, 0.2, 'sine', 0.2); // C5
         setTimeout(() => this.createTone(659, 0.2, 'sine', 0.2), 150); // E5
         setTimeout(() => this.createTone(784, 0.2, 'sine', 0.2), 300); // G5
     }
-    
+
     playSpecialPowerReadySound() {
         // Special power ready sound - magical chimes
         this.createTone(880, 0.3, 'sine', 0.4); // A5
         setTimeout(() => this.createTone(1108, 0.3, 'sine', 0.4), 200); // C#6
         setTimeout(() => this.createTone(1318, 0.4, 'sine', 0.4), 400); // E6
     }
-    
+
     playSpecialPowerActivateSound() {
         // Special power activation sound - epic power-up
         this.createTone(220, 0.2, 'sawtooth', 0.5);
@@ -737,122 +738,174 @@ class Game {
         setTimeout(() => this.createTone(880, 0.3, 'sawtooth', 0.5), 200);
         setTimeout(() => this.createTone(1760, 0.4, 'sine', 0.5), 300);
     }
-    
+
     activateSpecialPower() {
         if (!this.canUseSpecialPower || this.specialPowerActive) return;
-        
+
         // Activate special power
         this.specialPowerActive = true;
         this.specialPowerTimer = this.specialPowerDuration;
         this.canUseSpecialPower = false;
         this.energy = 0; // Reset energy after use
-        
+
         // Play activation sound
         this.playSpecialPowerActivateSound();
-        
+
         // Create epic visual effect
         this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2, '#FFD700', 50);
         this.addScreenShake(7, 250);
         this.addFlashEffect('#FFFFFF', 0.8, 300);
-        
+
         console.log('SPECIAL POWER ACTIVATED! Invincible for 10 seconds!');
     }
-    
+
     updateSpecialPower() {
         if (this.specialPowerActive) {
             this.specialPowerTimer--;
-            
+
             if (this.specialPowerTimer <= 0) {
                 this.specialPowerActive = false;
                 console.log('Special power ended.');
             }
         }
     }
-    
+
     startLevelTransition() {
         this.levelTransitionActive = true;
-        this.gameRunning = false; // Stop normal game updates
+    // The line "this.gameRunning = false;" has been removed.
         this.carAppeared = true;
-        this.levelTransitionTimer = 90; // 3 seconds pause
+        this.levelTransitionTimer = 60;
         console.log('Level transition started! Car approaching...');
+
+        this.showTransitionMessage();
     }
-    
+
     updateLevelTransition() {
         if (!this.levelTransitionActive) return;
-        
+
         this.levelTransitionTimer--;
-        
-        // Phase 1: Pause and show car appearing
-        if (this.levelTransitionTimer > 0) {
-            // Car moves into view during pause
-            if (this.carX > this.targetCarX) {
-                this.carX -= 3;
-            }
+        console.log('Transition timer:', this.levelTransitionTimer);
+
+        // Phase 1: Car moves into view
+        if (this.carX > this.targetCarX) {
+            this.carX -= 8; // Much faster car movement
+            console.log('Car moving, position:', this.carX);
         }
-        // Phase 2: Move player toward car
-        else if (!this.playerMovingToCar) {
+
+        // Phase 2: After short pause, start player movement
+        if (this.levelTransitionTimer <= 30 && !this.playerMovingToCar) {
             this.playerMovingToCar = true;
+            console.log('Player starting to move toward car');
         }
-        else {
-            // Move player toward car
-            if (this.player.x < this.targetCarX - 100) {
-                this.player.x += 2;
+
+        // Phase 3: Move player toward car
+        if (this.playerMovingToCar) {
+            if (this.player.x < this.targetCarX - 80) {
+                this.player.x += 3; // Faster player movement
+                console.log('Player moving, position:', this.player.x);
             } else {
                 // Transition complete - redirect to level 2
+                console.log('Transition complete! Redirecting to Level 2...');
                 this.transitionToLevel2();
             }
         }
+
+        // Emergency fallback - if timer runs out, force transition
+        if (this.levelTransitionTimer <= -60) {
+            console.log('Emergency transition fallback!');
+            this.transitionToLevel2();
+        }
     }
-    
+
+    showTransitionMessage() {
+        // Create and show transition overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'transitionOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            color: #00FF00;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+        overlay.innerHTML = `
+            <h2>LEVEL 2 UNLOCKED!</h2>
+            <p>Get in the car!</p>
+        `;
+        document.body.appendChild(overlay);
+    }
+
     transitionToLevel2() {
+        console.log('Saving progress and transitioning to Level 2...');
+
         // Save game progress
-        localStorage.setItem('noobCentralLevel', '2');
-        localStorage.setItem('noobCentralCharacter', this.selectedCharacter);
-        localStorage.setItem('noobCentralLives', this.lives.toString());
-        localStorage.setItem('noobCentralEnergy', this.energy.toString());
-        
-        // Redirect to level 2
-        window.location.href = 'level2.html';
+        try {
+            localStorage.setItem('noobCentralLevel', '2');
+            localStorage.setItem('noobCentralCharacter', this.selectedCharacter || 'juan');
+            localStorage.setItem('noobCentralLives', this.lives.toString());
+            localStorage.setItem('noobCentralEnergy', this.energy.toString());
+            console.log('Progress saved successfully');
+        } catch (error) {
+            console.error('Error saving progress:', error);
+        }
+
+        // Show loading message
+        const overlay = document.getElementById('transitionOverlay');
+        if (overlay) {
+            overlay.innerHTML = '<h2>Loading Level 2...</h2>';
+        }
+
+        // Redirect to level 2 with slight delay
+        setTimeout(() => {
+            console.log('Redirecting to level2.html');
+            window.location.href = 'level2.html';
+        }, 1000);
     }
-    
+
     drawCar() {
+        console.log('Drawing car at position:', this.carX);
         const carY = this.canvas.height - 120;
-        
-        // Car body
+
+        // Car body (bigger and more visible)
         this.ctx.fillStyle = '#FF4500';
-        this.ctx.fillRect(this.carX, carY, 120, 40);
-        
+        this.ctx.fillRect(this.carX, carY, 120, 50);
+
         // Car roof
         this.ctx.fillStyle = '#DC143C';
-        this.ctx.fillRect(this.carX + 20, carY - 20, 80, 20);
-        
+        this.ctx.fillRect(this.carX + 20, carY - 25, 80, 25);
+
         // Car windows
         this.ctx.fillStyle = '#87CEEB';
-        this.ctx.fillRect(this.carX + 25, carY - 18, 25, 15);
-        this.ctx.fillRect(this.carX + 70, carY - 18, 25, 15);
-        
-        // Car wheels
+        this.ctx.fillRect(this.carX + 25, carY - 20, 25, 18);
+        this.ctx.fillRect(this.carX + 70, carY - 20, 25, 18);
+
+        // Car wheels (bigger)
         this.ctx.fillStyle = '#000000';
         this.ctx.beginPath();
-        this.ctx.arc(this.carX + 20, carY + 40, 12, 0, Math.PI * 2);
+        this.ctx.arc(this.carX + 25, carY + 50, 15, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.beginPath();
-        this.ctx.arc(this.carX + 100, carY + 40, 12, 0, Math.PI * 2);
+        this.ctx.arc(this.carX + 95, carY + 50, 15, 0, Math.PI * 2);
         this.ctx.fill();
-        
-        // Car headlights
+
+        // Car headlights (bigger)
         this.ctx.fillStyle = '#FFFF00';
-        this.ctx.fillRect(this.carX + 115, carY + 5, 8, 8);
-        this.ctx.fillRect(this.carX + 115, carY + 25, 8, 8);
-        
-        // Level transition text
-        if (this.levelTransitionTimer > 0) {
-            this.ctx.fillStyle = '#FFFFFF';
-            this.ctx.font = '24px Courier New';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText('LEVEL 2 UNLOCKED!', this.canvas.width / 2, this.canvas.height / 2 - 50);
-            this.ctx.fillText('Get in the car!', this.canvas.width / 2, this.canvas.height / 2 - 20);
-        }
+        this.ctx.fillRect(this.carX + 115, carY + 10, 10, 10);
+        this.ctx.fillRect(this.carX + 115, carY + 30, 10, 10);
+
+        // Car glowing outline for visibility
+        this.ctx.strokeStyle = '#FFFFFF';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(this.carX, carY - 25, 120, 75);
     }
 
     injectMobileStyles() {
@@ -929,24 +982,24 @@ class Game {
             console.log('Updating hearts display...');
             const heartsContainer = document.getElementById('hearts');
             console.log('Hearts container:', heartsContainer);
-            
+
             if (!heartsContainer) {
                 console.warn('Hearts container not found!');
                 return; // Exit if element doesn't exist
             }
-            
+
             heartsContainer.innerHTML = '';
-            
+
             for (let i = 0; i < this.maxLives; i++) {
                 const heart = document.createElement('span');
                 heart.className = 'heart';
                 heart.textContent = '❤️';
-                
+
                 if (i >= this.lives) {
                     heart.classList.add('lost');
                     heart.textContent = '🤍';
                 }
-                
+
                 heartsContainer.appendChild(heart);
             }
             console.log('Hearts display updated successfully');
@@ -1001,7 +1054,7 @@ class Game {
                 if (this.onGround) {
                     this.jumpVelocity = this.jumpPower;
                     this.onGround = false;
-                    
+
                     // Create jump particles and play sound (access parent game instance)
                     if (window.gameInstance) {
                         window.gameInstance.createJumpParticles(this.x + this.width/2, this.y + this.height);
@@ -1064,25 +1117,25 @@ class Game {
                 // Hair
                 ctx.fillStyle = hairColor;
                 ctx.fillRect(this.x + 20, this.y + 10, 40, 20);
-                
+
                 // Head
                 ctx.fillStyle = skinColor;
                 ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
-                
+
                 // Eyes
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(this.x + 30, this.y + 23, 4, 4);
                 ctx.fillRect(this.x + 46, this.y + 23, 4, 4);
-                
+
                 // Body
                 ctx.fillStyle = shirtColor;
                 ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
-                
+
                 // Arms
                 ctx.fillStyle = skinColor;
                 ctx.fillRect(this.x + 5, this.y + 50, 18, 30);
                 ctx.fillRect(this.x + 57, this.y + 50, 18, 30);
-                
+
                 // Legs with animation
                 ctx.fillStyle = '#0066CC';
                 if (isJumping) {
@@ -1092,7 +1145,7 @@ class Game {
                     ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);
                     ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);
                 }
-                
+
                 // Shoes
                 ctx.fillStyle = '#654321';
                 ctx.fillRect(this.x + 23 + (isJumping ? 0 : legOffset), this.y + 115, 16, 8);
@@ -1723,7 +1776,7 @@ class Game {
                 this.shoot();
             });
         }
-        
+
         // Special power button
         const specialBtn = document.getElementById('specialBtn');
         if (specialBtn) {
@@ -2015,11 +2068,11 @@ class Game {
             draw: function(ctx) {
                 // Enhanced bullet with glow effect
                 ctx.save();
-                
+
                 // Outer glow
                 ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
                 ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
-                
+
                 // Main bullet body with gradient
                 ctx.fillStyle = '#FFFF00';
                 ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -2035,14 +2088,14 @@ class Game {
                 ctx.fillRect(this.x - 12, this.y + 2, 4, 2);
                 ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
                 ctx.fillRect(this.x - 16, this.y + 2, 4, 2);
-                
+
                 ctx.restore();
             }
         };
 
         // Create muzzle flash effect
         this.createMuzzleFlash(this.player.x + this.player.width, this.player.y + this.player.height / 2);
-        
+
         // Add slight screen shake for shooting
         this.addScreenShake(1, 50);
 
@@ -2074,26 +2127,26 @@ class Game {
                     // Main body (darker, more menacing)
                     ctx.fillStyle = '#4B0000';
                     ctx.fillRect(this.x + 5, this.y + 10, this.width - 10, this.height - 10);
-                    
+
                     // Muscle definition
                     ctx.fillStyle = '#8B0000';
                     ctx.fillRect(this.x + 10, this.y + 15, 25, 30);
                     ctx.fillRect(this.x + 45, this.y + 15, 25, 30);
-                    
+
                     // Glowing eyes (much more prominent)
                     ctx.fillStyle = '#FF4500';
                     ctx.fillRect(this.x + 12, this.y + 20, 16, 16);
                     ctx.fillRect(this.x + 42, this.y + 20, 16, 16);
-                    
+
                     // Simple eyes only - no shadows for performance
                     ctx.fillStyle = '#FFFF00';
                     ctx.fillRect(this.x + 16, this.y + 24, 8, 8);
                     ctx.fillRect(this.x + 46, this.y + 24, 8, 8);
-                    
+
                     // Menacing mouth with drool
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(this.x + 15, this.y + 50, 50, 15);
-                    
+
                     // Sharp fangs
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(this.x + 18, this.y + 50, 6, 20);
@@ -2101,17 +2154,17 @@ class Game {
                     ctx.fillRect(this.x + 36, this.y + 52, 4, 15);
                     ctx.fillRect(this.x + 46, this.y + 50, 6, 20);
                     ctx.fillRect(this.x + 56, this.y + 50, 6, 20);
-                    
+
                     // Drool
                     ctx.fillStyle = '#90EE90';
                     ctx.fillRect(this.x + 25, this.y + 65, 2, 8);
                     ctx.fillRect(this.x + 50, this.y + 67, 2, 6);
-                    
+
                     // Massive claws
                     ctx.fillStyle = '#FFD700';
                     ctx.fillRect(this.x, this.y + 65, 8, 15);
                     ctx.fillRect(this.x + 72, this.y + 65, 8, 15);
-                    
+
                     // Prominent spikes
                     ctx.fillStyle = '#8B4513';
                     ctx.fillRect(this.x + 10, this.y - 8, 8, 15);
@@ -2119,7 +2172,7 @@ class Game {
                     ctx.fillRect(this.x + 34, this.y - 10, 8, 18);
                     ctx.fillRect(this.x + 46, this.y - 11, 8, 19);
                     ctx.fillRect(this.x + 58, this.y - 7, 8, 14);
-                    
+
                     // Chest scars
                     ctx.fillStyle = '#FF0000';
                     ctx.fillRect(this.x + 30, this.y + 25, 20, 2);
@@ -2170,30 +2223,30 @@ class Game {
                     // Body (hoodie) - brighter to stand out
                     ctx.fillStyle = '#404040';
                     ctx.fillRect(this.x + 10, this.y + 30, 50, 60);
-                    
+
                     // Hoodie details
                     ctx.fillStyle = '#555555';
                     ctx.fillRect(this.x + 12, this.y + 32, 46, 8); // Chest stripe
-                    
+
                     // Head (more visible)
                     ctx.fillStyle = '#DDBEA9';
                     ctx.fillRect(this.x + 22, this.y + 18, 26, 22);
-                    
+
                     // BACKWARDS CAP - much more obvious
                     ctx.fillStyle = '#DC143C'; // Bright red cap
                     ctx.fillRect(this.x + 18, this.y + 15, 34, 12); // Main cap
-                    
+
                     // Cap brim pointing BACKWARDS (key feature)
                     ctx.fillStyle = '#B22222';
                     ctx.fillRect(this.x + 12, this.y + 20, 12, 6); // Backwards brim
                     ctx.fillRect(this.x + 10, this.y + 22, 8, 4); // Extended brim tip
-                    
+
                     // Cap logo/design
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(this.x + 28, this.y + 18, 12, 6);
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(this.x + 30, this.y + 20, 8, 2);
-                    
+
                     // Cool sunglasses (more prominent)
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(this.x + 24, this.y + 28, 20, 10);
@@ -2201,46 +2254,46 @@ class Game {
                     ctx.fillStyle = '#4169E1';
                     ctx.fillRect(this.x + 26, this.y + 30, 6, 6);
                     ctx.fillRect(this.x + 36, this.y + 30, 6, 6);
-                    
+
                     // Hood (less prominent so cap shows better)
                     ctx.fillStyle = 'rgba(26, 26, 26, 0.7)';
                     ctx.fillRect(this.x + 8, this.y + 8, 54, 25);
-                    
+
                     // Arms with sleeve details
                     ctx.fillStyle = '#404040';
                     ctx.fillRect(this.x, this.y + 35, 15, 25);
                     ctx.fillRect(this.x + 55, this.y + 35, 15, 25);
-                    
+
                     // Sleeve cuffs
                     ctx.fillStyle = '#666666';
                     ctx.fillRect(this.x, this.y + 55, 15, 5);
                     ctx.fillRect(this.x + 55, this.y + 55, 15, 5);
-                    
+
                     // Hands
                     ctx.fillStyle = '#DDBEA9';
                     ctx.fillRect(this.x + 2, this.y + 58, 11, 12);
                     ctx.fillRect(this.x + 57, this.y + 58, 11, 12);
-                    
+
                     // Jeans with details
                     ctx.fillStyle = '#000080';
                     ctx.fillRect(this.x + 15, this.y + 85, 15, 25);
                     ctx.fillRect(this.x + 40, this.y + 85, 15, 25);
-                    
+
                     // Jean seams
                     ctx.fillStyle = '#4682B4';
                     ctx.fillRect(this.x + 17, this.y + 87, 1, 21);
                     ctx.fillRect(this.x + 42, this.y + 87, 1, 21);
-                    
+
                     // Branded sneakers
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(this.x + 12, this.y + 105, 21, 8);
                     ctx.fillRect(this.x + 37, this.y + 105, 21, 8);
-                    
+
                     // Sneaker stripes
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(this.x + 15, this.y + 107, 3, 1);
                     ctx.fillRect(this.x + 40, this.y + 107, 3, 1);
-                    
+
                     // Hoodie strings (more visible)
                     ctx.fillStyle = '#FFFFFF';
                     ctx.fillRect(this.x + 30, this.y + 35, 2, 10);
@@ -2251,7 +2304,7 @@ class Game {
 
         this.enemies.push(enemy);
     }
-    
+
     spawnPowerUp() {
         const powerUp = {
             x: this.canvas.width + 50,
@@ -2259,11 +2312,11 @@ class Game {
             width: 40,
             height: 40,
             type: 'energy',
-            
+
             update: function(speed) {
                 this.x -= speed * 0.8; // Slower than enemies
             },
-            
+
             draw: function(ctx) {
                 // Energy power-up (lightning bolt)
                 ctx.fillStyle = '#FFD700';
@@ -2276,14 +2329,14 @@ class Game {
                 ctx.lineTo(this.x + 20, this.y + 25);
                 ctx.closePath();
                 ctx.fill();
-                
+
                 // No glow effects for performance
             }
         };
-        
+
         this.powerUps.push(powerUp);
     }
-    
+
     spawnCollectible() {
         const collectible = {
             x: this.canvas.width + 50,
@@ -2291,113 +2344,113 @@ class Game {
             width: 25,
             height: 25,
             type: 'joint',
-            
+
             update: function(speed) {
                 this.x -= speed * 0.6; // Even slower
             },
-            
+
             draw: function(ctx) {
                 // Marihuana plant leaf design
                 const centerX = this.x + 12;
                 const centerY = this.y + 12;
-                
+
                 // Main stem
                 ctx.fillStyle = '#228B22';
                 ctx.fillRect(centerX - 1, centerY + 5, 2, 8);
-                
+
                 // Central leaf (largest)
                 ctx.fillStyle = '#32CD32';
                 ctx.beginPath();
                 ctx.ellipse(centerX, centerY, 8, 12, 0, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Side leaves (serrated cannabis leaf shape)
                 ctx.fillStyle = '#228B22';
-                
+
                 // Left side leaves
                 ctx.beginPath();
                 ctx.ellipse(centerX - 6, centerY - 2, 4, 8, -0.3, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 ctx.beginPath();
                 ctx.ellipse(centerX - 4, centerY + 3, 3, 6, -0.1, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Right side leaves
                 ctx.beginPath();
                 ctx.ellipse(centerX + 6, centerY - 2, 4, 8, 0.3, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 ctx.beginPath();
                 ctx.ellipse(centerX + 4, centerY + 3, 3, 6, 0.1, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Leaf details (serrated edges effect)
                 ctx.fillStyle = '#006400';
                 ctx.fillRect(centerX - 2, centerY - 3, 1, 2);
                 ctx.fillRect(centerX + 1, centerY - 5, 1, 2);
                 ctx.fillRect(centerX - 1, centerY + 2, 1, 2);
                 ctx.fillRect(centerX + 2, centerY, 1, 2);
-                
+
                 // No glow effects for performance
             }
         };
-        
+
         this.collectibles.push(collectible);
     }
-    
+
     checkPowerUpCollisions() {
         for (let i = this.powerUps.length - 1; i >= 0; i--) {
             const powerUp = this.powerUps[i];
-            
+
             if (this.player.x < powerUp.x + powerUp.width &&
                 this.player.x + this.player.width > powerUp.x &&
                 this.player.y < powerUp.y + powerUp.height &&
                 this.player.y + this.player.height > powerUp.y) {
-                
+
                 // Give 100% energy
                 this.energy = 100;
-                
+
                 // Enable special power
                 if (!this.canUseSpecialPower) {
                     this.canUseSpecialPower = true;
                     this.playSpecialPowerReadySound();
                     console.log('Special power ready! Press Z or SPECIAL button!');
                 }
-                
+
                 // Create particles effect
                 this.createExplosion(powerUp.x + powerUp.width/2, powerUp.y + powerUp.height/2, '#FFD700');
-                
+
                 // Play sound effect
                 this.playPowerUpSound();
-                
+
                 // Remove power-up
                 this.powerUps.splice(i, 1);
             }
         }
     }
-    
+
     checkCollectibleCollisions() {
         for (let i = this.collectibles.length - 1; i >= 0; i--) {
             const collectible = this.collectibles[i];
-            
+
             if (this.player.x < collectible.x + collectible.width &&
                 this.player.x + this.player.width > collectible.x &&
                 this.player.y < collectible.y + collectible.height &&
                 this.player.y + this.player.height > collectible.y) {
-                
+
                 // Increase hearts (max 5)
                 if (this.lives < this.maxLives) {
                     this.lives++;
                     this.updateHeartsDisplay();
                 }
-                
+
                 // Create particles effect
                 this.createExplosion(collectible.x + collectible.width/2, collectible.y + collectible.height/2, '#228B22');
-                
+
                 // Play sound effect
                 this.playCollectibleSound();
-                
+
                 // Remove collectible
                 this.collectibles.splice(i, 1);
             }
@@ -2406,7 +2459,7 @@ class Game {
 
     checkCollisions() {
         if (this.invulnerable) return; // Skip collision check if invulnerable
-        
+
         this.enemies.forEach(enemy => {
             if (this.player.x < enemy.x + enemy.width &&
                 this.player.x + this.player.width > enemy.x &&
@@ -2421,22 +2474,22 @@ class Game {
 
     takeDamage() {
         if (this.invulnerable || this.specialPowerActive) return; // No damage during special power
-        
+
         this.lives--;
         this.invulnerable = true;
         this.invulnerabilityTimer = 120; // 2 seconds at 60fps
-        
+
         // Update hearts display
         this.updateHeartsDisplay();
-        
+
         // Create damage effect
         this.createExplosion(this.player.x + this.player.width/2, this.player.y + this.player.height/2);
         this.addScreenShake(2, 150);
         this.addFlashEffect('#FF0000', 0.4, 200);
-        
+
         // Play damage sound
         this.playDamageSound();
-        
+
         // Check if game over
         if (this.lives <= 0) {
             this.gameOver();
@@ -2454,13 +2507,13 @@ class Game {
 
     gameOver() {
         this.gameRunning = false;
-        
+
         const finalScoreEl = document.getElementById('finalScore');
         const gameOverEl = document.getElementById('gameOver');
-        
+
         if (finalScoreEl) finalScoreEl.textContent = Math.floor(this.distance);
         if (gameOverEl) gameOverEl.style.display = 'block';
-        
+
         // Play game over sound
         this.playGameOverSound();
     }
@@ -2477,17 +2530,17 @@ class Game {
             maxLife: life,
             life: life,
             gravity: gravity,
-            
+
             update: function() {
                 this.x += this.vx;
                 this.y += this.vy;
                 this.vy += this.gravity;
                 this.life--;
-                
+
                 // Fade out over time
                 this.alpha = this.life / this.maxLife;
             },
-            
+
             draw: function(ctx) {
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
@@ -2501,10 +2554,10 @@ class Game {
     createExplosion(x, y) {
         // Emergency performance mode - minimal particles
         if (this.disableParticles) return;
-        
+
         const particleCount = 3; // Very few particles
         const sparkCount = 2;
-        
+
         // Create multiple explosion particles
         for (let i = 0; i < particleCount; i++) {
             const angle = (Math.PI * 2 * i) / particleCount;
@@ -2513,10 +2566,10 @@ class Game {
             const vy = Math.sin(angle) * speed;
             const colors = ['#FF4500', '#FF6347', '#FFD700', '#FFA500', '#FF0000'];
             const color = colors[Math.floor(Math.random() * colors.length)];
-            
+
             this.particles.push(this.createParticle(x, y, vx, vy, color, 3 + Math.random() * 3, 30 + Math.random() * 20));
         }
-        
+
         // Add some sparks
         for (let i = 0; i < sparkCount; i++) {
             const vx = (Math.random() - 0.5) * 8;
@@ -2528,7 +2581,7 @@ class Game {
     createJumpParticles(x, y) {
         // Smart particle reduction for mobile performance
         const particleCount = this.mobileOptimizations ? 2 : 5;
-        
+
         // Dust particles when jumping
         for (let i = 0; i < particleCount; i++) {
             const vx = (Math.random() - 0.5) * 4;
@@ -2540,7 +2593,7 @@ class Game {
     createMuzzleFlash(x, y) {
         // Smart particle reduction for mobile performance
         const particleCount = this.mobileOptimizations ? 1 : 3;
-        
+
         // Muzzle flash when shooting
         for (let i = 0; i < particleCount; i++) {
             const vx = 2 + Math.random() * 3;
@@ -2553,7 +2606,7 @@ class Game {
         // Reduce screen shake by 50% for better performance
         const reducedIntensity = intensity * 0.5;
         const reducedDuration = duration * 0.5;
-        
+
         this.screenShake.intensity = reducedIntensity;
         this.screenShake.duration = reducedDuration;
     }
@@ -2573,7 +2626,7 @@ class Game {
         // Reduce flash effect intensity on mobile
         const mobileAlpha = this.mobileOptimizations ? alpha * 0.5 : alpha;
         const mobileDuration = this.mobileOptimizations ? duration * 0.6 : duration;
-        
+
         this.flashEffect.active = true;
         this.flashEffect.color = color;
         this.flashEffect.alpha = mobileAlpha;
@@ -2585,7 +2638,7 @@ class Game {
         if (this.flashEffect.active) {
             this.flashEffect.duration--;
             this.flashEffect.alpha = (this.flashEffect.duration / this.flashEffect.maxDuration) * 0.3;
-            
+
             if (this.flashEffect.duration <= 0) {
                 this.flashEffect.active = false;
             }
@@ -2607,10 +2660,10 @@ class Game {
 
                     // Create explosion effect
                     this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
-                    
+
                     // Minimal screen shake for enemy death
                     this.addScreenShake(1, 100);
-                    
+
                     // Flash effect
                     this.addFlashEffect('#FFFF00', 0.3, 100);
 
@@ -2625,7 +2678,7 @@ class Game {
                     this.distance += 10;
                     // Increase energy when killing enemies
                     this.energy = Math.min(this.maxEnergy, this.energy + 10);
-                    
+
                     // Check if player reached 100% energy for special power
                     if (this.energy >= 100 && !this.canUseSpecialPower) {
                         this.canUseSpecialPower = true;
@@ -2648,7 +2701,7 @@ class Game {
         const energyCheck = document.getElementById('energy');
         console.log('DEPLOYMENT DEBUG - Score element exists:', !!scoreCheck);
         console.log('DEPLOYMENT DEBUG - Energy element exists:', !!energyCheck);
-        
+
         if (!scoreCheck || !energyCheck) {
             console.error('CRITICAL: UI elements missing during update - stopping game');
             this.gameRunning = false;
@@ -2657,12 +2710,18 @@ class Game {
 
         // Check for level transition at 600m
         if (this.distance >= 600 && !this.levelTransitionActive && !this.carAppeared) {
+            console.log('LEVEL TRANSITION TRIGGERED at distance:', this.distance);
             this.startLevelTransition();
         }
-        
+
         // Only update distance if not in transition
         if (!this.levelTransitionActive) {
             this.distance += this.gameSpeed * 0.1;
+            // Debug distance every 10 meters
+            if (Math.floor(this.distance) % 10 === 0 && Math.floor(this.distance) !== this.lastLoggedDistance) {
+                console.log('Current distance:', Math.floor(this.distance));
+                this.lastLoggedDistance = Math.floor(this.distance);
+            }
         }
 
         // Update visual effects
@@ -2697,7 +2756,7 @@ class Game {
                     if (layer.objects.length > 0) {
                         const obj = layer.objects[this.frameCount % layer.objects.length];
                         obj.x -= this.gameSpeed * obj.speed;
-                        
+
                         if (obj.x < -obj.width - 100) {
                             obj.x = this.canvas.width + 300;
                         }
@@ -2739,14 +2798,14 @@ class Game {
             this.spawnEnemy();
             this.spawnTimer = 0;
         }
-        
+
         // Spawn power-ups (less frequent)
         this.powerUpSpawnTimer++;
         if (this.powerUpSpawnTimer > 900) { // Spawn every 15 seconds
             this.spawnPowerUp();
             this.powerUpSpawnTimer = 0;
         }
-        
+
         // Spawn collectibles (moderate frequency)
         this.collectibleSpawnTimer++;
         if (this.collectibleSpawnTimer > 300) { // Spawn every 5 seconds
@@ -2761,13 +2820,13 @@ class Game {
 
         // Remove off-screen enemies
         this.enemies = this.enemies.filter(enemy => enemy.x > -100);
-        
+
         // Update power-ups
         this.powerUps.forEach(powerUp => {
             powerUp.update(this.gameSpeed);
         });
         this.powerUps = this.powerUps.filter(powerUp => powerUp.x > -100);
-        
+
         // Update collectibles
         this.collectibles.forEach(collectible => {
             collectible.update(this.gameSpeed);
@@ -2782,16 +2841,16 @@ class Game {
 
         // TEMPORARY: Disable UI updates to fix deployment error
         console.log('DEPLOYMENT FIX: UI updates disabled temporarily');
-        
+
         // Update UI
         try {
             const scoreEl = document.getElementById('score');
             const energyEl = document.getElementById('energy');
-            
+
             if (scoreEl) {
                 scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m`;
             }
-            
+
             if (energyEl) {
                 let energyText = `Energy: ${Math.floor(this.energy)}%`;
                 if (this.specialPowerActive) {
@@ -2881,15 +2940,15 @@ class Game {
 
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
-        
+
         // Draw level transition car
         if (this.carAppeared) {
             this.drawCar();
         }
-        
+
         // Draw power-ups
         this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
-        
+
         // Draw collectibles
         this.collectibles.forEach(collectible => collectible.draw(this.ctx));
 
@@ -2898,7 +2957,7 @@ class Game {
 
         // Draw player
         // Player drawing (console.log removed for performance)
-        
+
         // Special power effect (simplified for performance)
         if (this.specialPowerActive) {
             this.ctx.save();
@@ -2907,9 +2966,9 @@ class Game {
             this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
             this.ctx.fillRect(this.player.x - 5, this.player.y - 5, this.player.width + 10, this.player.height + 10);
         }
-        
+
         this.player.draw(this.ctx);
-        
+
         if (this.specialPowerActive) {
             this.ctx.restore();
         }
@@ -2943,14 +3002,16 @@ class Game {
 
         // Throttle frame rate on mobile
         if (deltaTime >= targetFrameTime) {
-            if (this.gameRunning) {
-                this.update();
+            if (this.levelTransitionActive) {
+              this.updateLevelTransition(); // Continue updating only the transition animation
+            } else if (this.gameRunning) {
+              this.update(); // Otherwise, update the main game
             }
-            this.draw();
+            this.draw(); // Always draw the screen
             this.lastFrameTime = currentTime - (deltaTime % targetFrameTime);
             this.frameCount++;
         }
-        
+
         requestAnimationFrame(() => this.gameLoop());
     }
 }
@@ -2958,7 +3019,7 @@ class Game {
 // Start the game
 window.addEventListener('load', () => {
     console.log('Window loaded, creating game...');
-    
+
     // Small delay to ensure DOM is fully ready
     setTimeout(() => {
         try {
