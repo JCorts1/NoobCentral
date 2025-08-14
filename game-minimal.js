@@ -619,8 +619,7 @@ class Game {
             activeButton.classList.add('active');
         }
 
-        // Update character name in UI
-        document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(this.selectedCharacter)}`;
+        // Character name removed from UI
     }
 
     updateHeartsDisplay() {
@@ -1413,8 +1412,7 @@ class Game {
         // Save character preference
         this.saveSelectedCharacter(character);
 
-        // Update UI
-        document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(character)}`;
+        // Character name removed from UI
 
         // Update button styles
         document.querySelectorAll('.character-btn').forEach(btn => {
@@ -2171,7 +2169,7 @@ class Game {
         // Update UI
         document.getElementById('score').textContent = `Distance: ${Math.floor(this.distance)}m`;
         document.getElementById('energy').textContent = `Energy: 100%`;
-        document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(this.selectedCharacter)}`;
+        // Character name removed from UI
     }
 
     draw() {
