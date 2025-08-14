@@ -24,39 +24,54 @@ class Game {
         this.buildings = [];
         this.cityElements = [];
         
-        // Add Welcome to Medellin sign at the beginning
+        // Add Welcome to Medellin sign at the beginning (bigger and clearer)
         this.cityElements.push({
             x: 200,
-            y: this.canvas.height - 250,
-            width: 160,
-            height: 100,
+            y: this.canvas.height - 300,
+            width: 220,
+            height: 140,
             type: 'welcome_sign',
             update: function(speed) {
                 this.x -= speed;
             },
             draw: function(ctx) {
-                // Sign post
+                // Sign post (bigger)
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(this.x + 75, this.y + 70, 10, 80);
+                ctx.fillRect(this.x + 105, this.y + 100, 15, 100);
                 
-                // Sign board
+                // Sign board (bigger)
                 ctx.fillStyle = '#2F4F2F';
-                ctx.fillRect(this.x, this.y, this.width, 70);
+                ctx.fillRect(this.x, this.y, this.width, 100);
                 
-                // Colombian flag
+                // Sign border
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(this.x - 3, this.y - 3, this.width + 6, 106);
+                ctx.fillStyle = '#2F4F2F';
+                ctx.fillRect(this.x, this.y, this.width, 100);
+                
+                // Colombian flag (bigger)
                 ctx.fillStyle = '#FFFF00'; // Yellow
-                ctx.fillRect(this.x + 10, this.y + 5, 140, 20);
+                ctx.fillRect(this.x + 15, this.y + 8, 190, 25);
                 ctx.fillStyle = '#0033A0'; // Blue
-                ctx.fillRect(this.x + 10, this.y + 25, 140, 20);
+                ctx.fillRect(this.x + 15, this.y + 33, 190, 25);
                 ctx.fillStyle = '#CE1126'; // Red
-                ctx.fillRect(this.x + 10, this.y + 45, 140, 20);
+                ctx.fillRect(this.x + 15, this.y + 58, 190, 25);
                 
-                // Text
+                // Text (bigger and clearer)
                 ctx.fillStyle = '#FFFFFF';
-                ctx.font = '12px Arial';
-                ctx.fillText('WELCOME TO', this.x + 50, this.y + 17);
-                ctx.fillText('MEDELLIN', this.x + 55, this.y + 37);
-                ctx.fillText('COLOMBIA', this.x + 55, this.y + 57);
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('WELCOME TO', this.x + 65, this.y + 25);
+                
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText('MEDELLÍN', this.x + 70, this.y + 50);
+                
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('COLOMBIA', this.x + 75, this.y + 75);
+                
+                // Add decorative elements
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(this.x + 10, this.y + 5, 5, 90); // Left border
+                ctx.fillRect(this.x + 205, this.y + 5, 5, 90); // Right border
             }
         });
         
@@ -230,11 +245,11 @@ class Game {
                         }
                         
                         // Building logo/sign
-                        ctx.fillStyle = '#FF6B35';
+                        ctx.fillStyle = '#0066FF';
                         ctx.fillRect(this.x + 20, this.y + 30, this.width - 40, 25);
                         ctx.fillStyle = '#FFFFFF';
-                        ctx.font = '12px Arial';
-                        ctx.fillText('MEDELLÍN CORP', this.x + 35, this.y + 47);
+                        ctx.font = 'bold 12px Arial';
+                        ctx.fillText('CHANCES GANA', this.x + 30, this.y + 47);
                         
                         // Rooftop elements
                         ctx.fillStyle = '#444444';
@@ -514,8 +529,8 @@ class Game {
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(this.x + 36, this.y + 34, 8, 2);
                 
-                // Body (orange shirt)
-                ctx.fillStyle = '#FF6B35';
+                // Body (black shirt)
+                ctx.fillStyle = '#000000';
                 ctx.fillRect(this.x + 20, this.y + 45, 40, 50);
                 
                 // Arms (Latino skin tone)
@@ -528,12 +543,12 @@ class Game {
                 ctx.fillRect(this.x + 7, this.y + 78, 14, 12);  // Left hand
                 ctx.fillRect(this.x + 59, this.y + 78, 14, 12); // Right hand
                 
-                // Jeans
+                // Jeans (cover the legs properly)
                 ctx.fillStyle = '#0066CC';
                 ctx.fillRect(this.x + 20, this.y + 95, 40, 25);
                 
-                // Legs with running animation (Latino skin tone)
-                ctx.fillStyle = '#D2B48C';
+                // Legs with running animation (jeans color, not skin)
+                ctx.fillStyle = '#0066CC';
                 ctx.fillRect(this.x + 25 + legOffset, this.y + 95, 12, 25);  // Left leg
                 ctx.fillRect(this.x + 43 - legOffset, this.y + 95, 12, 25);  // Right leg
                 
