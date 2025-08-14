@@ -432,14 +432,14 @@ class Game {
     createPlayer() {
         return {
             x: 100,
-            y: this.canvas.height - 200,
+            y: this.canvas.height - 170,
             width: 80,
             height: 120,
             jumpVelocity: 0,
             onGround: true,
             gravity: 0.8,
             jumpPower: -18,
-            groundY: this.canvas.height - 200,
+            groundY: this.canvas.height - 170,
             animFrame: 0,
             character: this.selectedCharacter,
             
@@ -481,26 +481,38 @@ class Game {
             },
             
             drawJuan: function(ctx, legOffset) {
-                // Head (Latino skin tone)
-                ctx.fillStyle = '#D2B48C';
-                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
-                
-                // Long BLACK hair for Juan (flows down back and sides)
+                // Long BLACK hair for Juan (draw hair first, behind face)
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(this.x + 15, this.y + 10, 50, 25); // Top hair
                 ctx.fillRect(this.x + 10, this.y + 20, 60, 20); // Side hair
                 ctx.fillRect(this.x + 5, this.y + 30, 70, 25);  // Long flowing hair
                 ctx.fillRect(this.x + 8, this.y + 50, 64, 15);  // Hair continues down back
                 
-                // Face details
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
-                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
-                ctx.fillRect(this.x + 35, this.y + 35, 10, 2); // Mouth
+                // Head (Latino skin tone) - draw over hair
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
                 
-                // Nose
+                // Face details (more visible)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 30, this.y + 23, 5, 5); // Left eye (bigger)
+                ctx.fillRect(this.x + 45, this.y + 23, 5, 5); // Right eye (bigger)
+                
+                // Eyebrows
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 29, this.y + 21, 7, 2); // Left eyebrow
+                ctx.fillRect(this.x + 44, this.y + 21, 7, 2); // Right eyebrow
+                
+                // Nose (more prominent)
                 ctx.fillStyle = '#C8A882';
-                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                ctx.fillRect(this.x + 38, this.y + 28, 4, 6);
+                
+                // Mouth (more visible)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x + 35, this.y + 36, 10, 3);
+                
+                // Facial hair (mustache)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 36, this.y + 34, 8, 2);
                 
                 // Body (orange shirt)
                 ctx.fillStyle = '#FF6B35';
@@ -551,32 +563,43 @@ class Game {
             },
             
             drawKim: function(ctx, legOffset) {
-                // Head (WHITE skin tone)
-                ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
-                
-                // Long BROWN hair for Kim
+                // Long BROWN hair for Kim (draw hair first, behind face)
                 ctx.fillStyle = '#8B4513';
                 ctx.fillRect(this.x + 18, this.y + 10, 44, 30); // Top and side hair
                 ctx.fillRect(this.x + 12, this.y + 25, 56, 25); // Long flowing hair
                 ctx.fillRect(this.x + 15, this.y + 45, 50, 20); // Hair continues down
                 
-                // Face details
+                // Head (WHITE skin tone) - draw over hair
+                ctx.fillStyle = '#FDBCB4';
+                ctx.fillRect(this.x + 25, this.y + 15, 30, 30);
+                
+                // Face details (more visible)
                 ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 30, this.y + 25, 4, 4); // Left eye
-                ctx.fillRect(this.x + 46, this.y + 25, 4, 4); // Right eye
+                ctx.fillRect(this.x + 30, this.y + 23, 5, 5); // Left eye (bigger)
+                ctx.fillRect(this.x + 45, this.y + 23, 5, 5); // Right eye (bigger)
                 
-                // Eyelashes (feminine touch)
-                ctx.fillRect(this.x + 29, this.y + 23, 6, 1);
-                ctx.fillRect(this.x + 45, this.y + 23, 6, 1);
+                // Eyelashes (more prominent)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 28, this.y + 21, 8, 2); // Left eyelash
+                ctx.fillRect(this.x + 44, this.y + 21, 8, 2); // Right eyelash
                 
-                // Lipstick
-                ctx.fillStyle = '#FF69B4';
-                ctx.fillRect(this.x + 35, this.y + 35, 10, 3);
+                // Eyebrows (shaped)
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 29, this.y + 19, 7, 2); // Left eyebrow
+                ctx.fillRect(this.x + 44, this.y + 19, 7, 2); // Right eyebrow
                 
-                // Nose
+                // Nose (more defined)
                 ctx.fillStyle = '#F5A9A9';
-                ctx.fillRect(this.x + 38, this.y + 30, 4, 4);
+                ctx.fillRect(this.x + 38, this.y + 28, 4, 6);
+                
+                // Lipstick (more prominent)
+                ctx.fillStyle = '#FF69B4';
+                ctx.fillRect(this.x + 35, this.y + 35, 10, 4);
+                
+                // Cheek blush
+                ctx.fillStyle = '#FFB6C1';
+                ctx.fillRect(this.x + 27, this.y + 30, 4, 3); // Left cheek
+                ctx.fillRect(this.x + 49, this.y + 30, 4, 3); // Right cheek
                 
                 // Body (pink dress)
                 ctx.fillStyle = '#FF1493';
@@ -887,12 +910,12 @@ class Game {
         });
         document.querySelector(`[data-character="${character}"]`).classList.add('active');
         
-        // Show Juan's video if selected
-        if (character === 'juan') {
-            this.showJuanVideo();
-        } else {
-            this.hideVideo();
-        }
+        // Video functionality disabled for now
+        // if (character === 'juan') {
+        //     this.showJuanVideo();
+        // } else {
+        //     this.hideVideo();
+        // }
     }
     
     getCharacterDisplayName(character) {
