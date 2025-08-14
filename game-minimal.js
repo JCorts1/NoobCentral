@@ -14,8 +14,8 @@ class Game {
         this.gameSpeed = 2;
         this.gameRunning = true;
         
-        // Current selected character
-        this.selectedCharacter = 'juan';
+        // Load saved character or default to Juan
+        this.selectedCharacter = this.loadSavedCharacter() || 'juan';
         
         // Create character with jumping
         this.player = this.createPlayer();
@@ -431,6 +431,46 @@ class Game {
         
         console.log('Starting game loop...');
         this.gameLoop();
+        
+        // Initialize character selection UI to match saved character
+        this.updateCharacterSelectionUI();
+    }
+    
+    loadSavedCharacter() {
+        try {
+            const savedCharacter = localStorage.getItem('noobCentralSelectedCharacter');
+            if (savedCharacter && ['juan', 'kim', 'julian', 'jay'].includes(savedCharacter)) {
+                console.log(`Loading saved character: ${savedCharacter}`);
+                return savedCharacter;
+            }
+        } catch (error) {
+            console.log('Could not load saved character:', error);
+        }
+        return null;
+    }
+    
+    saveSelectedCharacter(character) {
+        try {
+            localStorage.setItem('noobCentralSelectedCharacter', character);
+            console.log(`Saved character preference: ${character}`);
+        } catch (error) {
+            console.log('Could not save character preference:', error);
+        }
+    }
+    
+    updateCharacterSelectionUI() {
+        // Update button styles to match current selection
+        document.querySelectorAll('.character-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const activeButton = document.querySelector(`[data-character="${this.selectedCharacter}"]`);
+        if (activeButton) {
+            activeButton.classList.add('active');
+        }
+        
+        // Update character name in UI
+        document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(this.selectedCharacter)}`;
     }
     
     generateWindowLights(cols, rows) {
@@ -915,6 +955,9 @@ class Game {
     selectCharacter(character) {
         this.selectedCharacter = character;
         this.player.character = character;
+        
+        // Save character preference
+        this.saveSelectedCharacter(character);
         
         // Update UI
         document.getElementById('characterName').textContent = `Character: ${this.getCharacterDisplayName(character)}`;
