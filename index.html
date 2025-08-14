@@ -77,6 +77,25 @@
             margin: 3px 0;
         }
 
+        #hearts {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .heart {
+            font-size: 20px;
+            color: #ff0000;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .heart.lost {
+            color: #666666;
+            text-shadow: none;
+            opacity: 0.5;
+        }
+
         .character-select {
             position: absolute;
             bottom: 20px;
@@ -232,6 +251,7 @@
             <div id="score">Distance: 0m</div>
             <div id="energy">Energy: 0%</div>
             <div id="characterName">Character: Juan</div>
+            <div id="hearts"></div>
             <div id="gameOver" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; text-align: center;">
                 <h2>Game Over!</h2>
                 <p>Distance: <span id="finalScore">0</span>m</p>
