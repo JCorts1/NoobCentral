@@ -38,6 +38,12 @@ class Level2Game {
         this.enemyCars = [];
         this.enemySpawnTimer = 0;
         this.carsAvoided = 0;
+        this.enemyBullets = [];
+        this.playerBullets = [];
+        this.shootCooldown = 0;
+        this.lastDistanceCheck = 0;
+        this.levelComplete = false;
+        this.winCondition = 2000; // Level ends at 2000 meters
 
         this.roadsideObjects = [];
         this.generateInitialRoadsideObjects();
@@ -66,9 +72,12 @@ class Level2Game {
         this.selectedCharacter = savedCharacter || 'juan';
         this.maxLives = 5;
 
-        // Convert leftover energy to a starting fuel bonus
+        // Enhanced fuel system - car needs fuel to operate
         this.fuel = 100 + (this.energy / 2);
-        this.maxFuel = this.fuel; // Max fuel can be higher now
+        this.maxFuel = this.fuel;
+        this.fuelConsumptionRate = 0.08; // Increased consumption
+        this.fuelPickups = []; // Fuel pickups on the road
+        this.nextFuelPickup = 200; // First fuel pickup at 200m
 
         console.log(`Level 2 loaded with: ${this.lives} lives. Converted energy to ${this.fuel} starting fuel.`);
     }
@@ -138,6 +147,14 @@ class Level2Game {
             specialBtn.innerHTML = '🚀';
             specialBtn.addEventListener('click', (e) => { e.preventDefault(); this.boost(); });
         }
+
+        // Add shooting controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !this.keys[' ']) {
+                e.preventDefault();
+                this.shoot();
+            }
+        });
     }
 
     moveLeft() {
@@ -177,17 +194,45 @@ class Level2Game {
         const lanes = [220, 360, 510];
         const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
 
+        // Difficulty scales with distance
+        const difficultyMultiplier = Math.min(this.distance / 500, 3); // Max 3x difficulty
+        const hasGun = this.distance > 300 && Math.random() < (0.3 + difficultyMultiplier * 0.2);
+
         const enemyCar = {
-            x: randomLane - 30, // Centered in lane
+            x: randomLane - 30,
             y: -120,
             width: 60,
             height: 100,
-            speed: this.gameSpeed + Math.random() * 2,
+            speed: this.gameSpeed + Math.random() * 2 + difficultyMultiplier,
             type: Math.random() > 0.5 ? 'police' : 'enemy',
-            color: `hsl(${Math.random() * 360}, 60%, 50%)`, // Random color for variety
+            color: `hsl(${Math.random() * 360}, 60%, 50%)`,
+            hasGun: hasGun,
+            shootTimer: Math.random() * 120, // Random initial shoot delay
+            health: 1 + Math.floor(difficultyMultiplier / 2),
 
-            update: function() {
+            update: function(game) {
                 this.y += this.speed;
+                
+                // Shooting behavior
+                if (this.hasGun && this.y > 0 && this.y < game.canvas.height - 200) {
+                    this.shootTimer--;
+                    if (this.shootTimer <= 0) {
+                        this.shoot(game);
+                        this.shootTimer = 60 + Math.random() * 120; // Random interval
+                    }
+                }
+            },
+
+            shoot: function(game) {
+                game.enemyBullets.push({
+                    x: this.x + this.width / 2,
+                    y: this.y + this.height,
+                    width: 4,
+                    height: 8,
+                    speed: 6,
+                    color: '#FF0000'
+                });
+                game.createTone(300, 0.1, 'square', 0.1);
             },
 
             draw: function(ctx, frameCount) { // GRAPHICS UPGRADE: Pass frameCount for animations
@@ -234,6 +279,14 @@ class Level2Game {
                     ctx.fillRect(this.x - 5, this.y + this.height - 8, 5, 5);
                     ctx.fillRect(this.x + this.width, this.y + this.height - 8, 5, 5);
                 }
+
+                // Draw gun if enemy has one
+                if (this.hasGun) {
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(this.x + this.width / 2 - 2, this.y + this.height - 10, 4, 15);
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(this.x + this.width / 2 - 1, this.y + this.height - 8, 2, 10);
+                }
             }
         };
 
@@ -275,14 +328,38 @@ class Level2Game {
         if (this.keys['ArrowLeft']) { this.moveLeft(); }
         if (this.keys['ArrowRight']) { this.moveRight(); }
 
+        // Update difficulty-based spawning
+        this.updateDifficultyBasedSpawning();
+        
         this.enemySpawnTimer++;
-        const spawnRate = this.isMobile ? 70 : 90;
+        const spawnRate = this.enemySpawnRate || (this.isMobile ? 70 : 90);
         if (this.enemySpawnTimer > spawnRate) {
             this.spawnEnemyCar();
             this.enemySpawnTimer = 0;
         }
 
-        this.enemyCars.forEach(car => car.update());
+        this.enemyCars.forEach(car => car.update(this));
+        
+        // Update bullets
+        this.shootCooldown = Math.max(0, this.shootCooldown - 1);
+        
+        // Update player bullets
+        this.playerBullets.forEach(bullet => bullet.y -= bullet.speed);
+        this.playerBullets = this.playerBullets.filter(bullet => bullet.y > -20);
+        
+        // Update enemy bullets
+        this.enemyBullets.forEach(bullet => bullet.y += bullet.speed);
+        this.enemyBullets = this.enemyBullets.filter(bullet => bullet.y < this.canvas.height + 20);
+        
+        // Update fuel pickups
+        this.fuelPickups.forEach(pickup => pickup.y += pickup.speed);
+        this.fuelPickups = this.fuelPickups.filter(pickup => pickup.y < this.canvas.height + 50);
+        
+        // Spawn fuel pickups periodically
+        if (this.distance >= this.nextFuelPickup) {
+            this.spawnFuelPickup();
+            this.nextFuelPickup += 150 + Math.random() * 100; // Every 150-250 meters
+        }
 
         this.enemyCars = this.enemyCars.filter(car => {
             if (car.y > this.canvas.height + 50) {
@@ -298,15 +375,69 @@ class Level2Game {
             this.roadsideObjects.shift();
             this.spawnRoadsideObject();
         }
+    }
+
+    shoot() {
+        if (this.shootCooldown <= 0) {
+            this.playerBullets.push({
+                x: this.car.x + this.car.width / 2,
+                y: this.car.y,
+                width: 3,
+                height: 10,
+                speed: 12,
+                color: '#00FF00'
+            });
+            this.shootCooldown = 15; // Cooldown between shots
+            this.createTone(400, 0.1, 'square', 0.2);
+        }
+    }
+
+    spawnFuelPickup() {
+        const lanes = [240, 380, 520]; // Slightly offset from car lanes
+        const lane = lanes[Math.floor(Math.random() * lanes.length)];
+        
+        this.fuelPickups.push({
+            x: lane - 15,
+            y: -50,
+            width: 30,
+            height: 40,
+            speed: this.gameSpeed,
+            fuelAmount: 25 + Math.random() * 25 // 25-50 fuel
+        });
+    }
+
+    updateDifficultyBasedSpawning() {
+        // Every 100 meters, increase enemy spawn rate
+        const currentHundreds = Math.floor(this.distance / 100);
+        const lastHundreds = Math.floor(this.lastDistanceCheck / 100);
+        
+        if (currentHundreds > lastHundreds) {
+            // Reduce spawn timer (more frequent spawning)
+            const baseSpawnRate = this.isMobile ? 70 : 90;
+            const reduction = Math.min(currentHundreds * 8, 50); // Max 50 frame reduction
+            this.enemySpawnRate = Math.max(baseSpawnRate - reduction, 20); // Minimum 20 frames
+            
+            console.log(`Distance: ${Math.floor(this.distance)}m - Spawn rate: ${this.enemySpawnRate}`);
+        }
+        
+        this.lastDistanceCheck = this.distance;
 
         this.updateParticles();
         this.updateScreenShake();
         this.checkCollisions();
+        this.checkBulletCollisions();
+        this.checkFuelPickups();
 
-        this.fuel = Math.max(0, this.fuel - 0.03);
+        this.fuel = Math.max(0, this.fuel - this.fuelConsumptionRate);
 
         if (this.fuel <= 0 && this.gameRunning) {
             this.gameOver("Out of Fuel!");
+        }
+        
+        // Check for level completion
+        if (this.distance >= this.winCondition && !this.levelComplete) {
+            this.levelComplete = true;
+            this.gameWin();
         }
 
         this.updateUI();
@@ -374,8 +505,11 @@ class Level2Game {
         const scoreEl = document.getElementById('score');
         const energyEl = document.getElementById('energy');
 
-        if (scoreEl) scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m | Avoided: ${this.carsAvoided}`;
-        if (energyEl) energyEl.textContent = `Fuel: ${Math.floor(this.fuel)}%`;
+        if (scoreEl) scoreEl.textContent = `Distance: ${Math.floor(this.distance)}m / ${this.winCondition}m | Destroyed: ${this.carsAvoided}`;
+        if (energyEl) {
+            const fuelColor = this.fuel < 25 ? '#FF0000' : this.fuel < 50 ? '#FFA500' : '#00FF00';
+            energyEl.innerHTML = `<span style="color: ${fuelColor}">Fuel: ${Math.floor(this.fuel)}%</span>`;
+        }
 
         this.updateHeartsDisplay();
     }
@@ -393,6 +527,118 @@ class Level2Game {
         if (finalScoreEl) finalScoreEl.textContent = `${Math.floor(this.distance)}m`;
 
         this.createTone(200, 0.8, 'triangle', 0.3);
+    }
+
+    gameWin() {
+        if (!this.gameRunning) return;
+        this.gameRunning = false;
+
+        // Save progress
+        localStorage.setItem('noobCentralLives', this.lives.toString());
+        localStorage.setItem('noobCentralEnergy', Math.floor(this.fuel).toString());
+        localStorage.setItem('noobCentralCharacter', this.selectedCharacter);
+
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const h2El = gameOverEl.querySelector('h2');
+        const buttonEl = gameOverEl.querySelector('button');
+
+        if (h2El) h2El.textContent = 'Level Complete!';
+        if (gameOverEl) gameOverEl.style.display = 'block';
+        if (finalScoreEl) finalScoreEl.textContent = `${Math.floor(this.distance)}m`;
+        if (buttonEl) {
+            buttonEl.textContent = 'Continue to Next Level';
+            buttonEl.onclick = () => {
+                // For now, just go back to main menu or reload
+                window.location.href = 'index.html';
+            };
+        }
+
+        this.createTone(440, 0.5, 'sine', 0.3);
+        this.createTone(554, 0.5, 'sine', 0.3);
+        this.createTone(659, 0.8, 'sine', 0.3);
+    }
+
+    checkBulletCollisions() {
+        // Player bullets hitting enemies
+        for (let i = this.playerBullets.length - 1; i >= 0; i--) {
+            const bullet = this.playerBullets[i];
+            for (let j = this.enemyCars.length - 1; j >= 0; j--) {
+                const enemy = this.enemyCars[j];
+                if (bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y) {
+                    
+                    this.playerBullets.splice(i, 1);
+                    enemy.health--;
+                    
+                    // Create hit effect
+                    for (let k = 0; k < 10; k++) {
+                        this.particles.push({
+                            x: bullet.x,
+                            y: bullet.y,
+                            vx: (Math.random() - 0.5) * 6,
+                            vy: (Math.random() - 0.5) * 6,
+                            life: 15 + Math.random() * 10,
+                            color: '#FFD700',
+                            type: 'spark'
+                        });
+                    }
+                    
+                    if (enemy.health <= 0) {
+                        this.enemyCars.splice(j, 1);
+                        this.carsAvoided++;
+                        this.createTone(250, 0.2, 'square', 0.2);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Enemy bullets hitting player
+        for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+            const bullet = this.enemyBullets[i];
+            if (bullet.x < this.car.x + this.car.width &&
+                bullet.x + bullet.width > this.car.x &&
+                bullet.y < this.car.y + this.car.height &&
+                bullet.y + bullet.height > this.car.y) {
+                
+                this.enemyBullets.splice(i, 1);
+                this.takeDamage();
+                break;
+            }
+        }
+    }
+
+    checkFuelPickups() {
+        for (let i = this.fuelPickups.length - 1; i >= 0; i--) {
+            const pickup = this.fuelPickups[i];
+            if (pickup.x < this.car.x + this.car.width &&
+                pickup.x + pickup.width > this.car.x &&
+                pickup.y < this.car.y + this.car.height &&
+                pickup.y + pickup.height > this.car.y) {
+                
+                this.fuel = Math.min(this.maxFuel, this.fuel + pickup.fuelAmount);
+                this.fuelPickups.splice(i, 1);
+                
+                // Create pickup effect
+                for (let j = 0; j < 15; j++) {
+                    this.particles.push({
+                        x: pickup.x + pickup.width / 2,
+                        y: pickup.y + pickup.height / 2,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        life: 20 + Math.random() * 10,
+                        color: '#00FF00',
+                        type: 'spark'
+                    });
+                }
+                
+                this.createTone(350, 0.3, 'sine', 0.2);
+                break;
+            }
+        }
     }
 
     addScreenShake(intensity, duration) {
@@ -466,6 +712,35 @@ class Level2Game {
         this.ctx.fillRect(590, 0, 5, this.canvas.height);
 
         this.enemyCars.forEach(car => car.draw(this.ctx, this.frameCount));
+        
+        // Draw bullets
+        this.playerBullets.forEach(bullet => {
+            this.ctx.fillStyle = bullet.color;
+            this.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
+        
+        this.enemyBullets.forEach(bullet => {
+            this.ctx.fillStyle = bullet.color;
+            this.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        });
+        
+        // Draw fuel pickups
+        this.fuelPickups.forEach(pickup => {
+            // Fuel can design
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.fillRect(pickup.x, pickup.y, pickup.width, pickup.height);
+            this.ctx.fillStyle = '#FFA500';
+            this.ctx.fillRect(pickup.x + 3, pickup.y + 3, pickup.width - 6, pickup.height - 6);
+            this.ctx.fillStyle = '#FF4500';
+            this.ctx.fillRect(pickup.x + 6, pickup.y + 6, pickup.width - 12, pickup.height - 12);
+            
+            // Fuel symbol
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 14px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('F', pickup.x + pickup.width / 2, pickup.y + pickup.height / 2 + 5);
+            this.ctx.textAlign = 'left';
+        });
 
         this.drawPlayerCar();
 
